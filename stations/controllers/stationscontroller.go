@@ -49,7 +49,12 @@ func (sc StationsController) GetStations(w http.ResponseWriter, r *http.Request,
 		stations[i] = station
 	}
 
-	stationsJSON, err := json.Marshal(stations)
+	// Send response back
+	type GetStationsResponse struct {
+		Stations []models.Station	`json:"stations"`
+	}
+
+	stationsJSON, err := json.Marshal(&GetStationsResponse{stations})
 	if handleError(w, err) {
 		return
 	}
@@ -78,6 +83,7 @@ type dirbleStream struct {
 func getDirbleStations() ([]dirbleStation, error) {
 	url := "http://api.dirble.com/v2/stations/popular?token=1aa6f199daa8d021c6c992800b&per_page=10"
 
+	// Make request
 	dirbleClient := http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -92,11 +98,13 @@ func getDirbleStations() ([]dirbleStation, error) {
 		return nil, err
 	}
 
+	// Read response
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
+	// Create DirbleStations from response
 	dirbleStations := make([]dirbleStation, 0)
 	err = json.Unmarshal(body, &dirbleStations)
 	if err != nil {
