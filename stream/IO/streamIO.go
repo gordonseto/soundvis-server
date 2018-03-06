@@ -1,0 +1,13 @@
+package streamIO
+
+import (
+	"github.com/gordonseto/soundvis-server/stations/models"
+	"github.com/gordonseto/soundvis-server/stream/models"
+)
+
+type GetCurrentStreamResponse struct {
+	IsPlaying bool 	`json:"isPlaying"`
+	CurrentStation models.Station	`json:"currentStation"`
+	CurrentStreamURL string	`json:"currentStreamUrl"`
+	CurrentStrong stream.Song `json:"currentSong"`
+}

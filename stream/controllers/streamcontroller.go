@@ -4,8 +4,9 @@ import (
 	"gopkg.in/mgo.v2"
 	"net/http"
 	"github.com/julienschmidt/httprouter"
-	"fmt"
 	"github.com/gordonseto/soundvis-server/authentication"
+	"github.com/gordonseto/soundvis-server/stream/IO"
+	"github.com/gordonseto/soundvis-server/general"
 )
 
 type (
@@ -23,9 +24,13 @@ func NewStreamController(s *mgo.Session) *StreamController {
 }
 
 func (sc StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	_, err := authentication.CheckAuthentication(r, sc.session)
+	user, err := authentication.CheckAuthentication(r, sc.session)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("We got here!")
+
+	response := streamIO.GetCurrentStreamResponse{}
+	response.IsPlaying = user.IsPlaying
+
+	basecontroller.SendResponse(w, response)
 }

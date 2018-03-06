@@ -12,6 +12,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"time"
 	"errors"
+	"github.com/gordonseto/soundvis-server/general"
 )
 
 type (
@@ -71,14 +72,7 @@ func (uc UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p h
 	response := usersIO.CreateUserResponse{}
 	response.User = user
 
-	responseJSON, err := json.Marshal(&response)
-	if err != nil {
-		panic(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "%s", responseJSON)
+	basecontroller.SendResponse(w, response)
 }
 
 func FindUserByDeviceToken(session *mgo.Session, deviceToken string, user *models.User) error {
