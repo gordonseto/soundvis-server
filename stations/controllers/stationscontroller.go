@@ -10,6 +10,7 @@ import (
 	"github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/config"
 	"strconv"
+	"github.com/gordonseto/soundvis-server/stations/IO"
 )
 
 type (
@@ -51,11 +52,8 @@ func (sc StationsController) GetStations(w http.ResponseWriter, r *http.Request,
 	}
 
 	// Send response back
-	type GetStationsResponse struct {
-		Stations []models.Station	`json:"stations"`
-	}
-
-	stationsJSON, err := json.Marshal(&GetStationsResponse{stations})
+	response := stationsIO.GetStationsResponse{stations}
+	stationsJSON, err := json.Marshal(&response)
 	if err != nil {
 		panic(err)
 	}
