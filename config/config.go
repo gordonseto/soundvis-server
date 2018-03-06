@@ -2,5 +2,5 @@ package config
 
 var PORT = ":8080"
 var DIRBLE_API_KEY = "1aa6f199daa8d021c6c992800b"
-var DB_ADDRESS = "mongodb://localhost"
+var DB_ADDRESS = "mongodb://notadmin:notpassword@ds117271.mlab.com:17271/soundvis"
 var DB_NAME = "soundvis"
