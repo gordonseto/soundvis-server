@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"github.com/gordonseto/soundvis-server/stations/models"
+	"github.com/gordonseto/soundvis-server/config"
+	"strconv"
 )
 
 type (
@@ -23,11 +25,10 @@ func NewStationsController() *StationsController {
 }
 
 func (sc StationsController) GetStations(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-
 	// get dirbleStations from their API
-	dirbleStations, err := getDirbleStations()
-	if handleError(w, err) {
-		return
+	dirbleStations, err := getDirbleStations(20, 0)
+	if err != nil {
+		panic(err)
 	}
 
 	// convert dirbleStations to stations
@@ -55,12 +56,12 @@ func (sc StationsController) GetStations(w http.ResponseWriter, r *http.Request,
 	}
 
 	stationsJSON, err := json.Marshal(&GetStationsResponse{stations})
-	if handleError(w, err) {
-		return
+	if err != nil {
+		panic(err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", stationsJSON)
 }
 
@@ -80,8 +81,8 @@ type dirbleStream struct {
 	Stream string `json:"stream"`
 }
 
-func getDirbleStations() ([]dirbleStation, error) {
-	url := "http://api.dirble.com/v2/stations/popular?token=1aa6f199daa8d021c6c992800b&per_page=10"
+func getDirbleStations(perPage, offset int) ([]dirbleStation, error) {
+	url := "http://api.dirble.com/v2/stations/popular?token=" + config.DIRBLE_API_KEY + "&per_page=" + strconv.Itoa(perPage) + "&offset=" + strconv.Itoa(offset)
 
 	// Make request
 	dirbleClient := http.Client{
@@ -112,12 +113,4 @@ func getDirbleStations() ([]dirbleStation, error) {
 	}
 
 	return dirbleStations, nil
-}
-
-func handleError(w http.ResponseWriter, err error) bool {
-	if err != nil {
-		fmt.Println(err)
-		return true
-	}
-	return false
 }
