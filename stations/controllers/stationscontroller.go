@@ -53,14 +53,14 @@ func (sc StationsController) GetStations(w http.ResponseWriter, r *http.Request,
 
 	// Send response back
 	response := stationsIO.GetStationsResponse{stations}
-	stationsJSON, err := json.Marshal(&response)
+	responseJSON, err := json.Marshal(&response)
 	if err != nil {
 		panic(err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "%s", stationsJSON)
+	fmt.Fprintf(w, "%s", responseJSON)
 }
 
 type dirbleStation struct {
