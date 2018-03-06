@@ -17,7 +17,7 @@ func main() {
 
 	dbSession := getSession()
 
-	sc := stations.NewStationsController()
+	sc := stations.NewStationsController(dbSession)
 	uc := users.NewUsersController(dbSession)
 
 	r.GET(sc.GETPath(), sc.GetStations)
