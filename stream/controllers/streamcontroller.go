@@ -40,6 +40,8 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
+	response.CurrentStreamURL = getCurrentStreamURL(user.CurrentPlaying, response.CurrentStation)
+
 	basecontroller.SendResponse(w, response)
 }
 
@@ -57,6 +59,18 @@ func getCurrentStation(currentPlaying string, session *mgo.Session) (*models.Sta
 			return nil, err
 		}
 		return &stations[0], nil
+	}
+}
+
+func getCurrentStreamURL(currentPlaying string, currentStation *models.Station) string {
+	if currentPlaying == "" {
+		return ""
+	}
+	if currentPlayingIsRecording(currentPlaying) {
+		// TODO: Implement this
+		return ""
+	} else {
+		return currentStation.StreamURL
 	}
 }
 
