@@ -60,6 +60,11 @@ func (uc UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p h
 		if err = uc.getCollection().Insert(user); err != nil {
 			panic(err)
 		}
+		// find user in collection
+		if err = findUserByDeviceToken(uc, request.DeviceToken, &user); err != nil {
+			// if not found this time, there is an error
+			panic(err)
+		}
 	}
 
 	response := usersIO.CreateUserResponse{}
