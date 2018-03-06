@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/gordonseto/soundvis-server/users/controllers"
 	"gopkg.in/mgo.v2"
+	"github.com/gordonseto/soundvis-server/stream/controllers"
 )
 
 func main() {
@@ -17,11 +18,13 @@ func main() {
 
 	dbSession := getSession()
 
-	sc := stations.NewStationsController(dbSession)
-	uc := users.NewUsersController(dbSession)
+	stationsController := stations.NewStationsController(dbSession)
+	usersController := users.NewUsersController(dbSession)
+	streamsController := stream.NewStreamController(dbSession)
 
-	r.GET(sc.GETPath(), sc.GetStations)
-	r.POST(uc.POSTPath(), uc.CreateUser)
+	r.GET(stationsController.GETPath(), stationsController.GetStations)
+	r.POST(usersController.POSTPath(), usersController.CreateUser)
+	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
 
 	http.ListenAndServe(config.PORT, r)
 }

@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"github.com/gordonseto/soundvis-server/stations/IO"
 	"gopkg.in/mgo.v2"
-	//"gopkg.in/mgo.v2/bson"
 )
 
 type (

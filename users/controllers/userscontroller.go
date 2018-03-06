@@ -11,6 +11,7 @@ import (
 	"github.com/gordonseto/soundvis-server/users/models"
 	"gopkg.in/mgo.v2/bson"
 	"time"
+	"errors"
 )
 
 type (
@@ -23,12 +24,12 @@ func NewUsersController(s *mgo.Session) *UsersController {
 	return &UsersController{s}
 }
 
-func (uc UsersController) getCollectionName() string {
+func getCollectionName() string {
 	return "users"
 }
 
-func (uc UsersController) getCollection() *mgo.Collection {
-	return uc.session.DB(config.DB_NAME).C(uc.getCollectionName())
+func getCollection(session *mgo.Session) *mgo.Collection {
+	return session.DB(config.DB_NAME).C(getCollectionName())
 }
 
 func (uc UsersController) POSTPath() string {
@@ -51,17 +52,17 @@ func (uc UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p h
 
 	// find user in database, if already contained, just return user
 	user := models.User{}
-	if err := findUserByDeviceToken(uc, request.DeviceToken, &user); err != nil {
+	if err := FindUserByDeviceToken(uc.session, request.DeviceToken, &user); err != nil {
 		// no user found, create user
 		user.Id = bson.NewObjectId()
 		user.DeviceToken = request.DeviceToken
 		user.CreatedAt = time.Now().Unix()
 		// insert into collection
-		if err = uc.getCollection().Insert(user); err != nil {
+		if err = getCollection(uc.session).Insert(user); err != nil {
 			panic(err)
 		}
 		// find user in collection
-		if err = findUserByDeviceToken(uc, request.DeviceToken, &user); err != nil {
+		if err = FindUserByDeviceToken(uc.session, request.DeviceToken, &user); err != nil {
 			// if not found this time, there is an error
 			panic(err)
 		}
@@ -80,6 +81,18 @@ func (uc UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p h
 	fmt.Fprintf(w, "%s", responseJSON)
 }
 
-func findUserByDeviceToken(uc UsersController, deviceToken string, user *models.User) error {
-	return uc.getCollection().Find(bson.M{"deviceToken":deviceToken}).One(&user)
+func FindUserByDeviceToken(session *mgo.Session, deviceToken string, user *models.User) error {
+	return getCollection(session).Find(bson.M{"deviceToken":deviceToken}).One(&user)
+}
+
+func FindUserById(session *mgo.Session, userId string) (*models.User, error) {
+	var user models.User
+	if !bson.IsObjectIdHex(userId) {
+		return nil, errors.New("Invalid userId")
+	}
+
+	oid := bson.ObjectIdHex(userId)
+
+	err := getCollection(session).FindId(oid).One(&user)
+	return &user, err
 }
