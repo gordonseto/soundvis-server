@@ -114,6 +114,14 @@ type dirbleStream struct {
 	Stream string `json:"stream"`
 }
 
+type DirbleError struct {
+	msg string
+}
+
+func (e *DirbleError) Error() string {
+	return e.msg
+}
+
 // gets perPage popular stations from dirble if dirbleStationId is empty, else gets that specific dirbleStation
 func getDirbleStations(dirbleStationId string, perPage, offset int) ([]dirbleStation, error) {
 	// if dirbleStationId is present, hit endpoint for specific station, else hit popular stations
@@ -137,6 +145,10 @@ func getDirbleStations(dirbleStationId string, perPage, offset int) ([]dirbleSta
 	res, err := dirbleClient.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, &DirbleError{"Invalid StationId"}
 	}
 
 	// Read response

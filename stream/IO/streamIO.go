@@ -11,3 +11,8 @@ type GetCurrentStreamResponse struct {
 	CurrentStreamURL string	`json:"currentStreamUrl"`
 	CurrentSong *stream.Song `json:"currentSong"`
 }
+
+type SetCurrentStreamRequest struct {
+	IsPlaying bool `json:"isPlaying"`
+	CurrentStream string	`json:"currentStream"`
+}

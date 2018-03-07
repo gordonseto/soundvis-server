@@ -25,6 +25,7 @@ func main() {
 	r.GET(stationsController.GETPath(), stationsController.GetStations)
 	r.POST(usersController.POSTPath(), usersController.CreateUser)
 	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
+	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
 
 	http.ListenAndServe(config.PORT, r)
 }

@@ -90,3 +90,7 @@ func FindUserById(session *mgo.Session, userId string) (*models.User, error) {
 	err := getCollection(session).FindId(oid).One(&user)
 	return &user, err
 }
+
+func UpdateUser(session *mgo.Session, user *models.User) error {
+	return getCollection(session).Update(bson.M{"_id": user.Id}, user)
+}

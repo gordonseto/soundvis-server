@@ -9,6 +9,8 @@ import (
 	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/stations/controllers"
+	"encoding/json"
+	"github.com/gordonseto/soundvis-server/users/controllers"
 )
 
 type (
@@ -17,7 +19,11 @@ type (
 	}
 )
 
-func (sc StreamController) GETPath() string {
+func (sc *StreamController) GETPath() string {
+	return "/stream"
+}
+
+func (sc *StreamController) POSTPath() string {
 	return "/stream"
 }
 
@@ -34,7 +40,6 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
 
-	user.CurrentPlaying = "57599"
 	response.CurrentStation, err = getCurrentStation(user.CurrentPlaying, sc.session)
 	if err != nil {
 		panic(err)
@@ -45,6 +50,47 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 	basecontroller.SendResponse(w, response)
 }
 
+func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	// check if authenticated
+	user, err := authentication.CheckAuthentication(r, sc.session)
+	if err != nil {
+		panic(err)
+	}
+
+	// parse request
+	request := streamIO.SetCurrentStreamRequest{}
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		panic(err)
+	}
+
+	// check if stream is valid
+	station, err := getCurrentStation(request.CurrentStream, sc.session)
+	if err != nil {
+		panic(err)
+	}
+
+	// set user's values to match request
+	user.IsPlaying = request.IsPlaying
+	user.CurrentPlaying = request.CurrentStream
+
+	// save user into db
+	err = users.UpdateUser(sc.session, user)
+	if err != nil {
+		panic(err)
+	}
+
+	// create response
+	response := streamIO.GetCurrentStreamResponse{}
+	response.IsPlaying = user.IsPlaying
+	response.CurrentStation = station
+	response.CurrentStreamURL = getCurrentStreamURL(user.CurrentPlaying, station)
+
+	basecontroller.SendResponse(w, response)
+}
+
+// takes in currentPlaying and returns the station corresponding with that id
+// currentPlaying is an id to a station or recording
 func getCurrentStation(currentPlaying string, session *mgo.Session) (*models.Station, error) {
 	if currentPlaying == "" {
 		return nil, nil
