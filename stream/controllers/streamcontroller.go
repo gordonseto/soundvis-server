@@ -136,6 +136,10 @@ func getStreamURL(currentPlaying string, currentStation *models.Station) string 
 // gets the most recent playing song in currentPlaying
 // currentPlaying is the id of a station or recording
 func getCurrentSongPlaying(currentPlaying string) (*stream.Song, error) {
+	if currentPlaying == "" {
+		return nil, nil
+	}
+
 	if currentPlayingIsRecording(currentPlaying) {
 		// TODO: Implement this
 		return nil, nil
@@ -165,5 +169,8 @@ func getCurrentSongPlaying(currentPlaying string) (*stream.Song, error) {
 }
 
 func currentPlayingIsRecording(currentPlaying string) bool {
+	if currentPlaying == "" {
+		return false
+	}
 	return false
 }
