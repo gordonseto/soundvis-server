@@ -1,7 +1,7 @@
 package stream
 
 type Song struct {
-	Artist string	`json:"artist"`
+	Name string		`json:"name"`
 	Title string 	`json:"title"`
 	Year int		`json:"year"`
 }

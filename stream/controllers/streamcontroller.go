@@ -11,6 +11,8 @@ import (
 	"github.com/gordonseto/soundvis-server/stations/controllers"
 	"encoding/json"
 	"github.com/gordonseto/soundvis-server/users/controllers"
+	"github.com/gordonseto/soundvis-server/stream/models"
+	"github.com/gordonseto/soundvis-server/config"
 )
 
 type (
@@ -40,12 +42,17 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
 
-	response.CurrentStation, err = getCurrentStation(user.CurrentPlaying, sc.session)
+	response.CurrentStation, err = getStation(user.CurrentPlaying, sc.session)
 	if err != nil {
 		panic(err)
 	}
 
-	response.CurrentStreamURL = getCurrentStreamURL(user.CurrentPlaying, response.CurrentStation)
+	response.CurrentStreamURL = getStreamURL(user.CurrentPlaying, response.CurrentStation)
+
+	response.CurrentSong, err = getCurrentSongPlaying(user.CurrentPlaying)
+	if err != nil {
+		panic(err)
+	}
 
 	basecontroller.SendResponse(w, response)
 }
@@ -65,7 +72,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	}
 
 	// check if stream is valid
-	station, err := getCurrentStation(request.CurrentStream, sc.session)
+	station, err := getStation(request.CurrentStream, sc.session)
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +81,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	user.IsPlaying = request.IsPlaying
 	user.CurrentPlaying = request.CurrentStream
 
-	// save user into db
+	// update user in db
 	err = users.UpdateUser(sc.session, user)
 	if err != nil {
 		panic(err)
@@ -84,14 +91,18 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
 	response.CurrentStation = station
-	response.CurrentStreamURL = getCurrentStreamURL(user.CurrentPlaying, station)
+	response.CurrentStreamURL = getStreamURL(user.CurrentPlaying, station)
+	response.CurrentSong, err = getCurrentSongPlaying(user.CurrentPlaying)
+	if err != nil {
+		panic(err)
+	}
 
 	basecontroller.SendResponse(w, response)
 }
 
 // takes in currentPlaying and returns the station corresponding with that id
 // currentPlaying is an id to a station or recording
-func getCurrentStation(currentPlaying string, session *mgo.Session) (*models.Station, error) {
+func getStation(currentPlaying string, session *mgo.Session) (*models.Station, error) {
 	if currentPlaying == "" {
 		return nil, nil
 	}
@@ -108,7 +119,9 @@ func getCurrentStation(currentPlaying string, session *mgo.Session) (*models.Sta
 	}
 }
 
-func getCurrentStreamURL(currentPlaying string, currentStation *models.Station) string {
+// gets the audio stream url from currentPlaying
+// currentPlaying is the id of a station or recording
+func getStreamURL(currentPlaying string, currentStation *models.Station) string {
 	if currentPlaying == "" {
 		return ""
 	}
@@ -117,6 +130,37 @@ func getCurrentStreamURL(currentPlaying string, currentStation *models.Station) 
 		return ""
 	} else {
 		return currentStation.StreamURL
+	}
+}
+
+// gets the most recent playing song in currentPlaying
+// currentPlaying is the id of a station or recording
+func getCurrentSongPlaying(currentPlaying string) (*stream.Song, error) {
+	if currentPlayingIsRecording(currentPlaying) {
+		// TODO: Implement this
+		return nil, nil
+	} else {
+		// build url
+		url := "http://api.dirble.com/v2/station/" + currentPlaying + "/song_history?token=" + config.DIRBLE_API_KEY
+		songs := make([]stream.Song, 0)
+
+		// make request
+		body, err := basecontroller.MakeRequest(url, http.MethodGet)
+		if err != nil {
+			return nil, err
+		}
+
+		// parse request
+		err = json.Unmarshal(body, &songs)
+		if err != nil {
+			return nil, err
+		}
+
+		if (len(songs) < 1) {
+			return nil, nil
+		}
+
+		return &songs[0], nil
 	}
 }
 
