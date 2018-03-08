@@ -10,6 +10,7 @@ import (
 	"github.com/gordonseto/soundvis-server/users/controllers"
 	"gopkg.in/mgo.v2"
 	"github.com/gordonseto/soundvis-server/stream/controllers"
+	"github.com/gordonseto/soundvis-server/stationsfetcher"
 )
 
 func main() {
@@ -26,6 +27,8 @@ func main() {
 	r.POST(usersController.POSTPath(), usersController.CreateUser)
 	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
 	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
+
+	stationsfetcher.FetchAndStoreStations()
 
 	http.ListenAndServe(config.PORT, r)
 }
