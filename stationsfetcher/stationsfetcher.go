@@ -6,10 +6,10 @@ import (
 	"encoding/xml"
 	"fmt"
 	"strings"
-	"golang.org/x/net/html"
+	"github.com/gordonseto/soundvis-server/stations/models"
+	"time"
+	"sync"
 	"errors"
-	"bytes"
-	"io"
 )
 
 type ShoutCastStationResponse struct {
@@ -39,8 +39,20 @@ type Track struct {
 	Location string		`xml:"location"`
 }
 
+type html struct {
+	Body body `xml:"body"`
+}
+type body struct {
+	Content string `xml:",innerxml"`
+}
+
+var waitGroup sync.WaitGroup
+var mutex = &sync.Mutex{}
+
 func FetchAndStoreStations() {
 	FETCH_STATIONS_URL := "http://api.shoutcast.com/legacy/Top500?k=t7kGHgPoxtvtuUOc"
+
+	stations := make([]models.Station, 0)
 
 	// Fetch all the stations
 	body, err := basecontroller.MakeRequest(FETCH_STATIONS_URL, http.MethodGet, 10)
@@ -53,77 +65,93 @@ func FetchAndStoreStations() {
 		fmt.Println(err)
 	}
 
-	// For each station, check tune in for their streamURL
-	TUNE_IN_URL := "http://yp.shoutcast.com/sbin/tunein-station.xspf?id="
-	for i := 0; i < 20; i++ {
+	// iterate through and get info for each station
+	for i := 0; i < 100; i++ {
 		shoutcastStation := response.StationList[i]
-		fmt.Println(shoutcastStation.Name + " " + shoutcastStation.Genre + " " + shoutcastStation.Id)
-
-		// Make request for streamURL
-		body, err := basecontroller.MakeRequest(TUNE_IN_URL + shoutcastStation.Id , http.MethodGet, 2)
-		if err != nil {
-			fmt.Println(err)
-		}
-		var tuneInResponse TuneInResponse
-		err = xml.Unmarshal(body, &tuneInResponse)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if len(tuneInResponse.Tracklist.Tracks) > 0 {
-			// Get first streamURL out of array
-			track := tuneInResponse.Tracklist.Tracks[0]
-			fmt.Println(track.Location)
-			streamBaseArray := strings.Split(track.Location, "/")
-			streamBase := ""
-			for j := 0; j < len(streamBaseArray) - 1; j++ {
-				streamBase += streamBaseArray[j] + "/"
-			}
-			fmt.Println(streamBase)
-			res, err := basecontroller.MakeRequest(streamBase + "7", http.MethodGet, 5)
+		// spin own routine for each station
+		go func() {
+			// increment waitgroup
+			waitGroup.Add(1)
+			// get info for station
+			station, err := getStationInfo(shoutcastStation)
 			if err != nil {
 				fmt.Println(err)
+			} else if station != nil {
+				// if station not nil, add to stations
+				mutex.Lock()
+				stations = append(stations, *station)
+				mutex.Unlock()
+			}
+			// decrement waitgroup
+			waitGroup.Done()
+		}()
+	}
+
+	// wait for all station goroutines to finish
+	waitGroup.Wait()
+
+	for _, station := range stations {
+		fmt.Println(station)
+	}
+}
+
+// takes a shoutcastStation and fetches its info to create a models.Station
+// if unable to, returns nil for station
+func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) {
+	defer fmt.Println("Done station!")
+
+	TUNE_IN_URL := "http://yp.shoutcast.com/sbin/tunein-station.xspf?id="
+
+	fmt.Println(shoutcastStation.Name + " " + shoutcastStation.Genre + " " + shoutcastStation.Id)
+
+	// Make request for streamURL
+	body, err := basecontroller.MakeRequest(TUNE_IN_URL + shoutcastStation.Id , http.MethodGet, 2)
+	if err != nil {
+		return nil, err
+	}
+	// parse response
+	var tuneInResponse TuneInResponse
+	err = xml.Unmarshal(body, &tuneInResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get first streamURL out of array
+	if len(tuneInResponse.Tracklist.Tracks) > 0 {
+		track := tuneInResponse.Tracklist.Tracks[0]
+		fmt.Println(track.Location)
+		// remove trailing url component
+		streamBaseArray := strings.Split(track.Location, "/")
+		streamBase := ""
+		for j := 0; j < len(streamBaseArray)-1; j++ {
+			streamBase += streamBaseArray[j] + "/"
+		}
+		fmt.Println(streamBase)
+		// send request to urlbase + "7"
+		// if this request succeeds, use this station, else discard it
+		res, err := basecontroller.MakeRequest(streamBase+"7", http.MethodGet, 5)
+		if err != nil {
+			return nil, err
+		} else {
+			fmt.Println(res)
+			h := html{}
+			err := xml.NewDecoder(strings.NewReader(string(res))).Decode(&h)
+			if err != nil {
+				return nil, err
 			} else {
-				fmt.Println(res)
-				doc, err := html.Parse(strings.NewReader(string(res)))
-				if err != nil {
-					fmt.Println(err)
+				fmt.Println(h.Body.Content)
+				station := models.Station{
+					Name:      shoutcastStation.Name,
+					Genre:     shoutcastStation.Genre,
+					StreamURL: track.Location,
+					CreatedAt: time.Now().Unix(),
+					UpdatedAt: time.Now().Unix(),
 				}
-				bn, err := getBody(doc)
-				if err != nil {
-					fmt.Println(err)
-				}
-				fmt.Println(renderNode(bn))
+				// TODO: Remove this
+				station.Id = h.Body.Content
+				return &station, nil
 			}
 		}
-
 	}
-
-	//for _, station := range response.StationList {
-	//	fmt.Println(station.Name + " " + station.Genre + " " + station.Id)
-	//}
-}
-
-func getBody(doc *html.Node) (*html.Node, error) {
-	var b *html.Node
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "body" {
-			b = n
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
-	f(doc)
-	if b != nil {
-		return b, nil
-	}
-	return nil, errors.New("Missing <body> in the node tree")
-}
-
-func renderNode(n *html.Node) string {
-	var buf bytes.Buffer
-	w := io.Writer(&buf)
-	html.Render(w, n)
-	return buf.String()
+	return nil, errors.New("Station has no tracks in tracklist")
 }
