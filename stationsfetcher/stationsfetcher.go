@@ -6,6 +6,10 @@ import (
 	"encoding/xml"
 	"fmt"
 	"strings"
+	"golang.org/x/net/html"
+	"errors"
+	"bytes"
+	"io"
 )
 
 type ShoutCastStationResponse struct {
@@ -80,13 +84,46 @@ func FetchAndStoreStations() {
 				fmt.Println(err)
 			} else {
 				fmt.Println(res)
+				doc, err := html.Parse(strings.NewReader(string(res)))
+				if err != nil {
+					fmt.Println(err)
+				}
+				bn, err := getBody(doc)
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println(renderNode(bn))
 			}
 		}
-
 
 	}
 
 	//for _, station := range response.StationList {
 	//	fmt.Println(station.Name + " " + station.Genre + " " + station.Id)
 	//}
+}
+
+func getBody(doc *html.Node) (*html.Node, error) {
+	var b *html.Node
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "body" {
+			b = n
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(doc)
+	if b != nil {
+		return b, nil
+	}
+	return nil, errors.New("Missing <body> in the node tree")
+}
+
+func renderNode(n *html.Node) string {
+	var buf bytes.Buffer
+	w := io.Writer(&buf)
+	html.Render(w, n)
+	return buf.String()
 }
