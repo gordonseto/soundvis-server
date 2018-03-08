@@ -1,19 +1,19 @@
 package stream
 
 import (
+	"encoding/json"
+	"github.com/gordonseto/soundvis-server/authentication"
+	"github.com/gordonseto/soundvis-server/config"
+	"github.com/gordonseto/soundvis-server/general"
+	"github.com/gordonseto/soundvis-server/notifications"
+	"github.com/gordonseto/soundvis-server/stations/controllers"
+	"github.com/gordonseto/soundvis-server/stations/models"
+	"github.com/gordonseto/soundvis-server/stream/IO"
+	"github.com/gordonseto/soundvis-server/stream/models"
+	"github.com/gordonseto/soundvis-server/users/controllers"
+	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 	"net/http"
-	"github.com/julienschmidt/httprouter"
-	"github.com/gordonseto/soundvis-server/authentication"
-	"github.com/gordonseto/soundvis-server/stream/IO"
-	"github.com/gordonseto/soundvis-server/general"
-	"github.com/gordonseto/soundvis-server/stations/models"
-	"github.com/gordonseto/soundvis-server/stations/controllers"
-	"encoding/json"
-	"github.com/gordonseto/soundvis-server/users/controllers"
-	"github.com/gordonseto/soundvis-server/stream/models"
-	"github.com/gordonseto/soundvis-server/config"
-	"github.com/gordonseto/soundvis-server/notifications"
 )
 
 type (
@@ -65,6 +65,12 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
+	// check if valid user-agent
+	userAgent, err := authentication.GetUserAgent(r)
+	if err != nil {
+		panic(err)
+	}
+
 	// parse request
 	request := streamIO.SetCurrentStreamRequest{}
 	err = json.NewDecoder(r.Body).Decode(&request)
@@ -98,15 +104,11 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
-	// get user agent
-	userAgent, err := authentication.GetUserAgent(r)
 	// if request was from DE1, send notification to Android device
-	if err == nil {
-		if userAgent == authentication.DE1 {
-			notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
-		} else if userAgent == authentication.ANDROID {
-			// TODO: Implement this
-		}
+	if userAgent == authentication.DE1 {
+		notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
+	} else if userAgent == authentication.ANDROID {
+		// TODO: Implement this
 	}
 
 	basecontroller.SendResponse(w, response)
@@ -172,7 +174,7 @@ func getCurrentSongPlaying(currentPlaying string) (*stream.Song, error) {
 			return nil, err
 		}
 
-		if (len(songs) < 1) {
+		if len(songs) < 1 {
 			return nil, nil
 		}
 
