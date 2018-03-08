@@ -163,7 +163,7 @@ func getCurrentSongPlaying(currentPlaying string) (*stream.Song, error) {
 		songs := make([]stream.Song, 0)
 
 		// make request
-		body, err := basecontroller.MakeRequest(url, http.MethodGet)
+		body, err := basecontroller.MakeRequest(url, http.MethodGet, 10)
 		if err != nil {
 			return nil, err
 		}

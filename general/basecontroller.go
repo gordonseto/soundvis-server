@@ -27,10 +27,10 @@ func (e *RequestError) Error() string {
 	return e.msg
 }
 
-func MakeRequest(url string, method string) ([]byte, error) {
+func MakeRequest(url string, method string, timeout time.Duration) ([]byte, error) {
 	// Make request
 	client := http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * timeout,
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

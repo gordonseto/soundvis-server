@@ -125,7 +125,7 @@ func getDirbleStations(dirbleStationId string, perPage, offset int) ([]dirbleSta
 	}
 
 	// Make request
-	body, err := basecontroller.MakeRequest(url, http.MethodGet)
+	body, err := basecontroller.MakeRequest(url, http.MethodGet, 10)
 	if err != nil {
 		return nil, err
 	}
