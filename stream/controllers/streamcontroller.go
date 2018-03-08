@@ -13,6 +13,7 @@ import (
 	"github.com/gordonseto/soundvis-server/users/controllers"
 	"github.com/gordonseto/soundvis-server/stream/models"
 	"github.com/gordonseto/soundvis-server/config"
+	"github.com/gordonseto/soundvis-server/notifications"
 )
 
 type (
@@ -95,6 +96,17 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response.CurrentSong, err = getCurrentSongPlaying(user.CurrentPlaying)
 	if err != nil {
 		panic(err)
+	}
+
+	// get user agent
+	userAgent, err := authentication.GetUserAgent(r)
+	// if request was from DE1, send notification to Android device
+	if err == nil {
+		if userAgent == authentication.DE1 {
+			notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
+		} else if userAgent == authentication.ANDROID {
+			// TODO: Implement this
+		}
 	}
 
 	basecontroller.SendResponse(w, response)
