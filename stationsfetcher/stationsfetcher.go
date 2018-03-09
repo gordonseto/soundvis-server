@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"encoding/json"
+	"strings"
 )
 
 type ShoutCastStationResponse struct {
@@ -86,6 +88,7 @@ func FetchAndStoreStations() []models.Station {
 
 	for _, station := range stations {
 		fmt.Println(station)
+		fmt.Println(station.Country)
 	}
 
 	return stations
@@ -115,6 +118,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 	// Get first streamURL out of array
 	if len(tuneInResponse.Tracklist.Tracks) > 0 {
 		streamURL := tuneInResponse.Tracklist.Tracks[0].Location
+
 		// get currentSong, this is to test if stream should be used
 		currentSong, err := stream.GetCurrentSongPlayingShoutcast(streamURL)
 
@@ -122,18 +126,65 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 		if err != nil {
 			return nil, err
 		} else {
-			station := models.Station{
-				Name:      shoutcastStation.Name,
-				Genre:     shoutcastStation.Genre,
-				StreamURL: streamURL,
-				CreatedAt: time.Now().Unix(),
-				UpdatedAt: time.Now().Unix(),
+			// get country for station
+			domain := getBaseDomain(streamURL)
+			if domain != "" {
+				country, err := getCountryForAddress(domain)
+				if err != nil {
+					return nil, err
+				}
+
+				station := models.Station{
+					Name:      shoutcastStation.Name,
+					Genre:     shoutcastStation.Genre,
+					StreamURL: streamURL,
+					Country: country,
+					CreatedAt: time.Now().Unix(),
+					UpdatedAt: time.Now().Unix(),
+				}
+				// TODO: Remove this
+				station.Id = currentSong
+				return &station, nil
+			} else {
+				return nil, errors.New("Station has invalid streamURL")
 			}
-			// TODO: Remove this
-			station.Id = currentSong
-			return &station, nil
 		}
 
 	}
 	return nil, errors.New("Station has no tracks in tracklist")
+}
+
+type CountryResponse struct {
+	Country string `json:"country"`
+	CountryCode string `json:"countryCode"`
+	Lat float64	`json:"lat"`
+	Lon float64 `json:lon`
+}
+
+func getBaseDomain(url string) string {
+	domainArray := strings.Split(url, "/")
+	if len(domainArray) >= 3 {
+		domain := strings.Split(domainArray[2], ":")[0]
+		return domain
+	}
+	return ""
+}
+
+func getCountryForAddress(address string) (*models.Country, error) {
+	res, err := basecontroller.MakeRequest("http://ip-api.com/json/" + address, http.MethodGet, 10)
+	if err != nil {
+		return nil, err
+	}
+	var countryResponse CountryResponse
+	err = json.Unmarshal(res, &countryResponse)
+	if err != nil {
+		return nil, err
+	}
+	country := models.Country{
+		Name: countryResponse.Country,
+		Code: countryResponse.CountryCode,
+		Latitude: countryResponse.Lat,
+		Longitude: countryResponse.Lon,
+	}
+	return &country, nil
 }
