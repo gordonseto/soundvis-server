@@ -1,55 +1,48 @@
 package stationsfetcher
 
 import (
-	"github.com/gordonseto/soundvis-server/general"
-	"net/http"
 	"encoding/xml"
-	"fmt"
-	"strings"
-	"github.com/gordonseto/soundvis-server/stations/models"
-	"time"
-	"sync"
 	"errors"
+	"fmt"
+	"github.com/gordonseto/soundvis-server/general"
+	"github.com/gordonseto/soundvis-server/stations/models"
+	"github.com/gordonseto/soundvis-server/stream/controllers"
+	"net/http"
+	"sync"
+	"time"
 )
 
 type ShoutCastStationResponse struct {
-	XMLName	xml.Name	`xml:"stationlist"`
-	StationList []ShoutcastStation	`xml:"station"`
+	XMLName     xml.Name           `xml:"stationlist"`
+	StationList []ShoutcastStation `xml:"station"`
 }
 
 type ShoutcastStation struct {
-	XMLName xml.Name	`xml:"station"`
-	Id string `xml:"id,attr"`
-	Name string `xml:"name,attr"`
-	Genre string `xml:"genre,attr"`
+	XMLName xml.Name `xml:"station"`
+	Id      string   `xml:"id,attr"`
+	Name    string   `xml:"name,attr"`
+	Genre   string   `xml:"genre,attr"`
 }
 
 type TuneInResponse struct {
-	XMLName xml.Name	`xml:"playlist"`
-	Tracklist	TrackList	`xml:"trackList"`
+	XMLName   xml.Name  `xml:"playlist"`
+	Tracklist TrackList `xml:"trackList"`
 }
 
 type TrackList struct {
-	XMLName xml.Name	`xml:"trackList"`
-	Tracks	[]Track		`xml:"track"`
+	XMLName xml.Name `xml:"trackList"`
+	Tracks  []Track  `xml:"track"`
 }
 
 type Track struct {
-	XMLName xml.Name	`xml:"track"`
-	Location string		`xml:"location"`
-}
-
-type html struct {
-	Body body `xml:"body"`
-}
-type body struct {
-	Content string `xml:",innerxml"`
+	XMLName  xml.Name `xml:"track"`
+	Location string   `xml:"location"`
 }
 
 var waitGroup sync.WaitGroup
 var mutex = &sync.Mutex{}
 
-func FetchAndStoreStations() {
+func FetchAndStoreStations() []models.Station {
 	FETCH_STATIONS_URL := "http://api.shoutcast.com/legacy/Top500?k=t7kGHgPoxtvtuUOc"
 
 	stations := make([]models.Station, 0)
@@ -59,13 +52,14 @@ func FetchAndStoreStations() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	// Parse response
 	var response ShoutCastStationResponse
 	err = xml.Unmarshal(body, &response)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// iterate through and get info for each station
+	// iterate through each shoutcast station in the response and get info for each station
 	for i := 0; i < 100; i++ {
 		shoutcastStation := response.StationList[i]
 		// spin own routine for each station
@@ -93,6 +87,8 @@ func FetchAndStoreStations() {
 	for _, station := range stations {
 		fmt.Println(station)
 	}
+
+	return stations
 }
 
 // takes a shoutcastStation and fetches its info to create a models.Station
@@ -105,7 +101,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 	fmt.Println(shoutcastStation.Name + " " + shoutcastStation.Genre + " " + shoutcastStation.Id)
 
 	// Make request for streamURL
-	body, err := basecontroller.MakeRequest(TUNE_IN_URL + shoutcastStation.Id , http.MethodGet, 2)
+	body, err := basecontroller.MakeRequest(TUNE_IN_URL + shoutcastStation.Id, http.MethodGet, 2)
 	if err != nil {
 		return nil, err
 	}
@@ -118,40 +114,26 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 
 	// Get first streamURL out of array
 	if len(tuneInResponse.Tracklist.Tracks) > 0 {
-		track := tuneInResponse.Tracklist.Tracks[0]
-		fmt.Println(track.Location)
-		// remove trailing url component
-		streamBaseArray := strings.Split(track.Location, "/")
-		streamBase := ""
-		for j := 0; j < len(streamBaseArray)-1; j++ {
-			streamBase += streamBaseArray[j] + "/"
-		}
-		fmt.Println(streamBase)
-		// send request to urlbase + "7"
-		// if this request succeeds, use this station, else discard it
-		res, err := basecontroller.MakeRequest(streamBase+"7", http.MethodGet, 5)
+		streamURL := tuneInResponse.Tracklist.Tracks[0].Location
+		// get currentSong, this is to test if stream should be used
+		currentSong, err := stream.GetCurrentSongPlayingShoutcast(streamURL)
+
+		// if there is an error, discard station
 		if err != nil {
 			return nil, err
 		} else {
-			fmt.Println(res)
-			h := html{}
-			err := xml.NewDecoder(strings.NewReader(string(res))).Decode(&h)
-			if err != nil {
-				return nil, err
-			} else {
-				fmt.Println(h.Body.Content)
-				station := models.Station{
-					Name:      shoutcastStation.Name,
-					Genre:     shoutcastStation.Genre,
-					StreamURL: track.Location,
-					CreatedAt: time.Now().Unix(),
-					UpdatedAt: time.Now().Unix(),
-				}
-				// TODO: Remove this
-				station.Id = h.Body.Content
-				return &station, nil
+			station := models.Station{
+				Name:      shoutcastStation.Name,
+				Genre:     shoutcastStation.Genre,
+				StreamURL: streamURL,
+				CreatedAt: time.Now().Unix(),
+				UpdatedAt: time.Now().Unix(),
 			}
+			// TODO: Remove this
+			station.Id = currentSong
+			return &station, nil
 		}
+
 	}
 	return nil, errors.New("Station has no tracks in tracklist")
 }

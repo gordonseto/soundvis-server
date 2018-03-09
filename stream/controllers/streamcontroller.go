@@ -6,7 +6,6 @@ import (
 	"github.com/gordonseto/soundvis-server/config"
 	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/notifications"
-	"github.com/gordonseto/soundvis-server/stations/controllers"
 	"github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/stream/IO"
 	"github.com/gordonseto/soundvis-server/stream/models"
@@ -14,6 +13,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 	"net/http"
+	"strings"
+	"fmt"
+	"encoding/xml"
+	"github.com/gordonseto/soundvis-server/stations/controllers"
 )
 
 type (
@@ -179,6 +182,39 @@ func getCurrentSongPlaying(currentPlaying string) (*stream.Song, error) {
 		}
 
 		return &songs[0], nil
+	}
+}
+
+type html struct {
+	Body body `xml:"body"`
+}
+type body struct {
+	Content string `xml:",innerxml"`
+}
+
+// takes in a shoutcast streamURL and returns the current song playing if valid
+func GetCurrentSongPlayingShoutcast(streamURL string) (string, error) {
+	// remove trailing url component
+	streamBaseArray := strings.Split(streamURL, "/")
+	streamBase := ""
+	for j := 0; j < len(streamBaseArray)-1; j++ {
+		streamBase += streamBaseArray[j] + "/"
+	}
+	fmt.Println(streamBase)
+	// send request to urlbase + "7"
+	// if this request succeeds, use this station, else discard it
+	res, err := basecontroller.MakeRequest(streamBase + "7", http.MethodGet, 5)
+	if err != nil {
+		return "", err
+	} else {
+		fmt.Println(res)
+		h := html{}
+		err := xml.NewDecoder(strings.NewReader(string(res))).Decode(&h)
+		if err != nil {
+			return "", err
+		} else {
+			return h.Body.Content, nil
+		}
 	}
 }
 
