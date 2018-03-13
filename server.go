@@ -11,6 +11,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"github.com/gordonseto/soundvis-server/stream/controllers"
 	"github.com/gordonseto/soundvis-server/stationsfetcher"
+	"github.com/gordonseto/soundvis-server/stations/repositories"
 )
 
 func main() {
@@ -18,6 +19,8 @@ func main() {
 	r.PanicHandler = handleError
 
 	dbSession := getSession()
+
+	stationsRepository := stationsrepository.NewStationsRepository(dbSession)
 
 	stationsController := stations.NewStationsController(dbSession)
 	usersController := users.NewUsersController(dbSession)
@@ -28,7 +31,7 @@ func main() {
 	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
 	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
 
-	stationsfetcher.FetchAndStoreStations()
+	stationsfetcher.FetchAndStoreStations(stationsRepository)
 
 	http.ListenAndServe(config.PORT, r)
 }

@@ -79,7 +79,7 @@ func GetStations(sc *StationsController, dirbleStationId string, perPage, offset
 func dirbleStationToStation(dirbleStation *dirbleStation, countriesMap map[string]models.Country) *models.Station {
 	station := models.Station{
 		Name: dirbleStation.Name,
-		DirbleId: dirbleStation.Id,
+		//DirbleId: dirbleStation.Id,
 		CreatedAt: time.Now().Unix(),
 		UpdatedAt: time.Now().Unix(),
 	}

@@ -12,6 +12,10 @@ import (
 	"time"
 	"encoding/json"
 	"strings"
+	"github.com/gordonseto/soundvis-server/stations/repositories"
+	"gopkg.in/mgo.v2/bson"
+	"strconv"
+	"github.com/gordonseto/soundvis-server/config"
 )
 
 type ShoutCastStationResponse struct {
@@ -44,8 +48,8 @@ type Track struct {
 var waitGroup sync.WaitGroup
 var mutex = &sync.Mutex{}
 
-func FetchAndStoreStations() []models.Station {
-	FETCH_STATIONS_URL := "http://api.shoutcast.com/legacy/Top500?k=t7kGHgPoxtvtuUOc"
+func FetchAndStoreStations(sr *stationsrepository.StationsRepository) []models.Station {
+	FETCH_STATIONS_URL := "http://api.shoutcast.com/legacy/Top500?k=" + config.SHOUTCAST_API_KEY
 
 	stations := make([]models.Station, 0)
 
@@ -62,7 +66,7 @@ func FetchAndStoreStations() []models.Station {
 	}
 
 	// iterate through each shoutcast station in the response and get info for each station
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 500; i++ {
 		shoutcastStation := response.StationList[i]
 		// spin own routine for each station
 		go func() {
@@ -86,9 +90,16 @@ func FetchAndStoreStations() []models.Station {
 	// wait for all station goroutines to finish
 	waitGroup.Wait()
 
+	fmt.Println("Number of valid stations: " + strconv.Itoa(len(stations)))
+	// clear old stations
+	sr.GetStationsRepository().RemoveAll(nil)
+	// insert into repository
 	for _, station := range stations {
-		fmt.Println(station)
-		fmt.Println(station.Country)
+		fmt.Println("Inserting station " + station.Id)
+		err = sr.GetStationsRepository().Insert(station)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	return stations
@@ -120,7 +131,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 		streamURL := tuneInResponse.Tracklist.Tracks[0].Location
 
 		// get currentSong, this is to test if stream should be used
-		currentSong, err := stream.GetCurrentSongPlayingShoutcast(streamURL)
+		_, err := stream.GetCurrentSongPlayingShoutcast(streamURL)
 
 		// if there is an error, discard station
 		if err != nil {
@@ -135,6 +146,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 				}
 
 				station := models.Station{
+					Id: bson.NewObjectId(),
 					Name:      shoutcastStation.Name,
 					Genre:     shoutcastStation.Genre,
 					StreamURL: streamURL,
@@ -142,8 +154,6 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 					CreatedAt: time.Now().Unix(),
 					UpdatedAt: time.Now().Unix(),
 				}
-				// TODO: Remove this
-				station.Id = currentSong
 				return &station, nil
 			} else {
 				return nil, errors.New("Station has invalid streamURL")
@@ -151,7 +161,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 		}
 
 	}
-	return nil, errors.New("Station has no tracks in tracklist")
+	return nil, errors.New("Error getting info for station")
 }
 
 type CountryResponse struct {

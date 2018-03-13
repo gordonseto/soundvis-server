@@ -1,15 +1,16 @@
 package models
 
+import "gopkg.in/mgo.v2/bson"
+
 type (
 	Station struct {
-		Id string	`json:"id"`
-		Name string	`json:"name"`
-		DirbleId int `json:"dirbleId"`
-		Country *Country	`json:"country"`
-		StreamURL string `json:"streamUrl"`
-		Genre	string	`json:"genre"`
-		CreatedAt int64	`json:"createdAt"`
-		UpdatedAt int64 `json:"updatedAt"`
+		Id bson.ObjectId	`json:"id" bson:"_id"`
+		Name string	`json:"name" bson:"name"`
+		Country *Country	`json:"country" bson:"country"`
+		StreamURL string `json:"streamUrl" bson:"streamUrl"`
+		Genre	string	`json:"genre" bson:"genre"`
+		CreatedAt int64	`json:"createdAt" bson:"createdAt"`
+		UpdatedAt int64 `json:"updatedAt" bson:"updatedAt"`
 	}
 
 	Country struct {
