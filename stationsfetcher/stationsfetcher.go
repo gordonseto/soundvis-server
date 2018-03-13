@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/stations/models"
-	"github.com/gordonseto/soundvis-server/stream/controllers"
 	"net/http"
 	"sync"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"github.com/gordonseto/soundvis-server/config"
+	"github.com/gordonseto/soundvis-server/stream/models"
 )
 
 type ShoutCastStationResponse struct {
@@ -131,7 +131,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 		streamURL := tuneInResponse.Tracklist.Tracks[0].Location
 
 		// get currentSong, this is to test if stream should be used
-		_, err := stream.GetCurrentSongPlayingShoutcast(streamURL)
+		_, err := GetCurrentSongPlayingShoutcast(streamURL)
 
 		// if there is an error, discard station
 		if err != nil {
@@ -197,4 +197,37 @@ func getCountryForAddress(address string) (*models.Country, error) {
 		Longitude: countryResponse.Lon,
 	}
 	return &country, nil
+}
+
+// takes in a shoutcast streamURL and returns the current song playing if valid
+func GetCurrentSongPlayingShoutcast(streamURL string) (*stream.Song, error) {
+	// remove trailing url component
+	streamBaseArray := strings.Split(streamURL, "/")
+	streamBase := ""
+	for j := 0; j < len(streamBaseArray)-1; j++ {
+		streamBase += streamBaseArray[j] + "/"
+	}
+	fmt.Println(streamBase)
+	// send request to urlbase + "7"
+	// if this request succeeds, use this station, else discard it
+	res, err := basecontroller.MakeRequest(streamBase + "7", http.MethodGet, 5)
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(res)
+		h := html{}
+		err := xml.NewDecoder(strings.NewReader(string(res))).Decode(&h)
+		if err != nil {
+			return nil, err
+		} else {
+			return &stream.Song{Title: h.Body.Content}, nil
+		}
+	}
+}
+
+type html struct {
+	Body body `xml:"body"`
+}
+type body struct {
+	Content string `xml:",innerxml"`
 }

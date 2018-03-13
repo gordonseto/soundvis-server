@@ -10,7 +10,9 @@ import (
 	"github.com/gordonseto/soundvis-server/users/controllers"
 	"gopkg.in/mgo.v2"
 	"github.com/gordonseto/soundvis-server/stream/controllers"
-	"github.com/gordonseto/soundvis-server/stationsfetcher"
+	//"github.com/gordonseto/soundvis-server/stationsfetcher"
+	//"github.com/gordonseto/soundvis-server/stations/repositories"
+	"github.com/gordonseto/soundvis-server/users/repositories"
 	"github.com/gordonseto/soundvis-server/stations/repositories"
 )
 
@@ -21,17 +23,18 @@ func main() {
 	dbSession := getSession()
 
 	stationsRepository := stationsrepository.NewStationsRepository(dbSession)
+	usersRepository := usersrepository.NewUsersRepository(dbSession)
 
-	stationsController := stations.NewStationsController(dbSession)
-	usersController := users.NewUsersController(dbSession)
-	streamsController := stream.NewStreamController(dbSession)
+	stationsController := stations.NewStationsController(stationsRepository)
+	usersController := users.NewUsersController(usersRepository)
+	streamsController := stream.NewStreamController(usersRepository, stationsRepository)
 
 	r.GET(stationsController.GETPath(), stationsController.GetStations)
 	r.POST(usersController.POSTPath(), usersController.CreateUser)
 	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
 	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
 
-	stationsfetcher.FetchAndStoreStations(stationsRepository)
+	//stationsfetcher.FetchAndStoreStations(stationsRepository)
 
 	http.ListenAndServe(config.PORT, r)
 }
