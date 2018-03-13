@@ -13,6 +13,7 @@ import (
 	"github.com/gordonseto/soundvis-server/stations/repositories"
 	"github.com/gordonseto/soundvis-server/stream/models"
 	"github.com/gordonseto/soundvis-server/stationsfetcher"
+	"fmt"
 )
 
 type (
@@ -106,7 +107,8 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 
 	// if request was from DE1, send notification to Android device
 	if userAgent == authentication.DE1 {
-		notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
+		err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
+		fmt.Println(err)
 	} else if userAgent == authentication.ANDROID {
 		// TODO: Implement this
 	}

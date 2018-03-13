@@ -77,6 +77,7 @@ func FetchAndStoreStations(sr *stationsrepository.StationsRepository) []models.S
 			if err != nil {
 				fmt.Println(err)
 			} else if station != nil {
+				fmt.Println("Appending station: " + station.Id)
 				// if station not nil, add to stations
 				mutex.Lock()
 				stations = append(stations, *station)
@@ -131,7 +132,8 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 		streamURL := tuneInResponse.Tracklist.Tracks[0].Location
 
 		// get currentSong, this is to test if stream should be used
-		_, err := GetCurrentSongPlayingShoutcast(streamURL)
+		currentSong , err := GetCurrentSongPlayingShoutcast(streamURL)
+		fmt.Println(currentSong)
 
 		// if there is an error, discard station
 		if err != nil {
@@ -144,6 +146,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 				if err != nil {
 					return nil, err
 				}
+				fmt.Println(country)
 
 				station := models.Station{
 					Id: bson.NewObjectId(),
