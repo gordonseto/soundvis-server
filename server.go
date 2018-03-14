@@ -10,9 +10,9 @@ import (
 	"github.com/gordonseto/soundvis-server/users/controllers"
 	"gopkg.in/mgo.v2"
 	"github.com/gordonseto/soundvis-server/stream/controllers"
-	//"github.com/gordonseto/soundvis-server/stationsfetcher"
 	"github.com/gordonseto/soundvis-server/users/repositories"
 	"github.com/gordonseto/soundvis-server/stations/repositories"
+	//"github.com/gordonseto/soundvis-server/stationsfetcher"
 )
 
 func main() {

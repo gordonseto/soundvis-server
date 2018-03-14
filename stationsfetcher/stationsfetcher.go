@@ -77,7 +77,7 @@ func FetchAndStoreStations(sr *stationsrepository.StationsRepository) []models.S
 			if err != nil {
 				fmt.Println(err)
 			} else if station != nil {
-				fmt.Println("Appending station: " + station.Id)
+				//fmt.Println("Appending station: " + station.Id)
 				// if station not nil, add to stations
 				mutex.Lock()
 				stations = append(stations, *station)
@@ -113,7 +113,7 @@ func getStationInfo(shoutcastStation ShoutcastStation) (*models.Station, error) 
 
 	TUNE_IN_URL := "http://yp.shoutcast.com/sbin/tunein-station.xspf?id="
 
-	fmt.Println(shoutcastStation.Name + " " + shoutcastStation.Genre + " " + shoutcastStation.Id)
+	//fmt.Println(shoutcastStation.Name + " " + shoutcastStation.Genre + " " + shoutcastStation.Id)
 
 	// Make request for streamURL
 	body, err := basecontroller.MakeRequest(TUNE_IN_URL + shoutcastStation.Id, http.MethodGet, 2)
@@ -210,20 +210,20 @@ func GetCurrentSongPlayingShoutcast(streamURL string) (*stream.Song, error) {
 	for j := 0; j < len(streamBaseArray)-1; j++ {
 		streamBase += streamBaseArray[j] + "/"
 	}
-	fmt.Println(streamBase)
+	//fmt.Println(streamBase)
 	// send request to urlbase + "7"
 	// if this request succeeds, use this station, else discard it
 	res, err := basecontroller.MakeRequest(streamBase + "7", http.MethodGet, 5)
 	if err != nil {
 		return nil, err
 	} else {
-		fmt.Println(res)
+		//fmt.Println(res)
 		h := html{}
 		err := xml.NewDecoder(strings.NewReader(string(res))).Decode(&h)
 		if err != nil {
 			return nil, err
 		} else {
-			return &stream.Song{Title: h.Body.Content}, nil
+			return stream.SongFromString(h.Body.Content), nil
 		}
 	}
 }
