@@ -14,12 +14,14 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/models"
 	"github.com/gordonseto/soundvis-server/stationsfetcher"
 	"fmt"
+	"github.com/gordonseto/soundvis-server/socketmanager"
 )
 
 type (
 	StreamController struct {
 		usersRepository *usersrepository.UsersRepository
 		stationsRepository *stationsrepository.StationsRepository
+		socketManager *socketmanager.SocketManager
 	}
 )
 
@@ -31,8 +33,8 @@ func (sc *StreamController) POSTPath() string {
 	return "/stream"
 }
 
-func NewStreamController(ur *usersrepository.UsersRepository, sr *stationsrepository.StationsRepository) *StreamController {
-	return &StreamController{ur, sr}
+func NewStreamController(ur *usersrepository.UsersRepository, sr *stationsrepository.StationsRepository, sm *socketmanager.SocketManager) *StreamController {
+	return &StreamController{ur, sr, sm}
 }
 
 func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
