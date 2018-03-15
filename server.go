@@ -36,7 +36,7 @@ func main() {
 	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
 	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
 
-	r.POST(socketManager.POSTPath(), socketManager.Connect)
+	r.GET(socketManager.POSTPath(), socketManager.Connect)
 	//stationsfetcher.FetchAndStoreStations(stationsRepository)
 
 	http.ListenAndServe(config.PORT, r)

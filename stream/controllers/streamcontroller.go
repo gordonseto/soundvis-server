@@ -112,7 +112,13 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
 		fmt.Println(err)
 	} else if userAgent == authentication.ANDROID {
-		// TODO: Implement this
+		// else send socket message to DE1 connection
+		userId := "3"
+		err = sc.socketManager.SendStreamUpdateMessage(userId, response)
+		if err != nil {
+			fmt.Println("Socket error for userId: " + userId)
+			fmt.Println(err)
+		}
 	}
 
 	basecontroller.SendResponse(w, response)

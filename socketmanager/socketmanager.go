@@ -30,7 +30,7 @@ var upgrader = websocket.Upgrader{
 
 func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	userId := "3"
-	fmt.Println("UserId from header: + " + r.Header.Get("userId"))
+	fmt.Println("UserId from header: " + r.Header.Get("userId"))
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(errors.New("Error connecting socket"))
@@ -45,33 +45,31 @@ func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httpr
 func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 	defer func(){
 		// remove connection from table if disconnects
-		sm.connections[userId] = nil
+		delete(sm.connections, userId)
 		}()
 	defer conn.Close()
 	for {
 		mt, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("read:", err)
+			log.Println("UserId: " + userId + " Read: ", err)
 			break
 		}
-		log.Printf("recv: %s", message)
+		log.Printf("UserId: " + userId + " Recv: %s", message)
 		err = conn.WriteMessage(mt, message)
 		if err != nil {
-			log.Println("write:", err)
+			log.Println("UserId: " + userId + " Write:", err)
 			break
 		}
 	}
 }
 
-func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamIO.GetCurrentStreamResponse) {
+func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamIO.GetCurrentStreamResponse) error {
 	conn, ok := sm.connections[userId]
 	if !ok {
-		fmt.Println("No connection found for userId: " + userId)
+		return errors.New("No connection found for userId: " + userId)
 	}
 	err := conn.WriteJSON(response)
-	if err != nil {
-		fmt.Println("Error writing message to connection for userId: " + userId)
-	}
+	return err
 }
 
 
