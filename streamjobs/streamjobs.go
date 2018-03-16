@@ -36,13 +36,13 @@ func (sjm *StreamJobManager) RefreshNowPlaying() {
 		return
 	}
 	for _, user := range users {
-		go sjm.CheckNowPlayingForUser(user)
+		go sjm.checkNowPlayingForUser(user)
 	}
 }
 
 // checks user's currentPlaying; if the station or song has changed, sends a socket message
 // and notification to user
-func (sjm *StreamJobManager) CheckNowPlayingForUser(user models.User) {
+func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 	// get the current station and song playing for user
 	station, song, err := sjm.streamManager.GetCurrentStationAndSongPlaying(user.CurrentPlaying)
 	if err != nil {
