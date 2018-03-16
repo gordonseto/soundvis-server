@@ -17,6 +17,9 @@ func CheckAuthentication(r *http.Request,) (*models.User, error) {
 		return nil, err
 	}
 	user, err := usersrepository.Shared().FindUserById(userId)
+	if err != nil {
+		return nil, errors.New("User does not exist")
+	}
 	return user, err
 }
 

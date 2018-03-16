@@ -32,7 +32,7 @@ func main() {
 	r.POST(recordingsController.POSTPath(), recordingsController.CreateRecording)
 
 	r.POST(socketmanager.Shared().POSTPath(), socketmanager.Shared().Connect)
-	//stationsfetcher.FetchAndStoreStations(stationsRepository)
+	//stationsfetcher.FetchAndStoreStations(stationsrepository.Shared())
 
 	jobmanager.Shared().RegisterStreamJobs()
 

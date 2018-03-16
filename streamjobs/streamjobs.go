@@ -11,6 +11,7 @@ import (
 	"github.com/gordonseto/soundvis-server/users/repositories"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/socketmanager"
+	"fmt"
 )
 
 type StreamJobManager struct {
@@ -41,6 +42,7 @@ func (sjm *StreamJobManager) RefreshNowPlaying() {
 		return
 	}
 	for _, user := range users {
+		fmt.Println(user.Id.Hex())
 		go sjm.checkNowPlayingForUser(user)
 	}
 }
@@ -60,7 +62,6 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 	// get station and song already stored in map for user
 	mutex.Lock()
 	previousPlaying, _ := sjm.previousPlayingMap[user.Id.Hex()]
-	mutex.Unlock()
 
 	// if previousPlaying has changed, a new song is playing
 	if previousPlaying != stringified {
@@ -77,7 +78,6 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), response)
 	}
 	// set previousPlaying to current song
-	mutex.Lock()
 	sjm.previousPlayingMap[user.Id.Hex()] = stringified
 	mutex.Unlock()
 }
