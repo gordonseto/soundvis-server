@@ -36,6 +36,22 @@ func currentPlayingIsRecording(currentPlaying string) bool {
 	return false
 }
 
+// gets the current station and the song from currentPlaying
+// currentPlaying is an id for a station or recording
+func (sm *StreamManager) GetCurrentStationAndSongPlaying(currentPlaying string) (*models.Station, *stream.Song, error) {
+	if currentPlaying == "" {
+		return nil, nil, nil
+	}
+
+	station, err := sm.GetStation(currentPlaying)
+	if err != nil {
+		return nil, nil, err
+	}
+	song, err := sm.GetCurrentSongPlaying(currentPlaying, station)
+	return station, song, err
+}
+
+// gets the station from currentPlaying
 // currentPlaying is an id for a station or recording
 func (sm *StreamManager) GetStation(currentPlaying string) (*models.Station, error) {
 	if currentPlaying == "" {
@@ -50,6 +66,7 @@ func (sm *StreamManager) GetStation(currentPlaying string) (*models.Station, err
 	}
 }
 
+// gets the current song from currentPlaying
 // currentPlaying is an id for a station or recording
 func (sm *StreamManager) GetCurrentSongPlaying(currentPlaying string, station *models.Station) (*stream.Song, error) {
 	if currentPlaying == "" {

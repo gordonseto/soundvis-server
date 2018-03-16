@@ -43,12 +43,7 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
 
-	response.CurrentStation, err =  sc.streamManager.GetStation(user.CurrentPlaying)
-	if err != nil {
-		panic(err)
-	}
-
-	response.CurrentSong, err = sc.streamManager.GetCurrentSongPlaying(user.CurrentPlaying, response.CurrentStation)
+	response.CurrentStation, response.CurrentSong, err =  sc.streamManager.GetCurrentStationAndSongPlaying(user.CurrentPlaying)
 	if err != nil {
 		panic(err)
 	}

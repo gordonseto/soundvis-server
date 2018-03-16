@@ -44,7 +44,7 @@ func main() {
 	//stationsfetcher.FetchAndStoreStations(stationsRepository)
 
 	jobManager := jobmanager.NewJobManager()
-	streamJobManager := streamjobs.NewStreamJobManager(usersRepository)
+	streamJobManager := streamjobs.NewStreamJobManager(usersRepository, streamManager, socketManager)
 	jobManager.RegisterStreamJobs(streamJobManager)
 
 	go func(){
