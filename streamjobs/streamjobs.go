@@ -62,6 +62,9 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 	// get station and song already stored in map for user
 	mutex.Lock()
 	previousPlaying, _ := sjm.previousPlayingMap[user.Id.Hex()]
+	// set previousPlaying to current song
+	sjm.previousPlayingMap[user.Id.Hex()] = stringified
+	mutex.Unlock()
 
 	// if previousPlaying has changed, a new song is playing
 	if previousPlaying != stringified {
@@ -70,16 +73,13 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 		response.CurrentStation = station
 		response.CurrentSong = song
 		response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
-		log.Println(response.CurrentStation.Name + " - " + response.CurrentSong.Name)
+		log.Println(response.CurrentStation.Name + ", " + response.CurrentSong.Name + " - " + response.CurrentSong.Title)
 
 		// send android notification
 		notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
 		// send socket message
 		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), response)
 	}
-	// set previousPlaying to current song
-	sjm.previousPlayingMap[user.Id.Hex()] = stringified
-	mutex.Unlock()
 }
 
 // concatenates together station and song for comparison
