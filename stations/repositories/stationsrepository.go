@@ -6,14 +6,22 @@ import (
 	"github.com/gordonseto/soundvis-server/stations/models"
 	"gopkg.in/mgo.v2/bson"
 	"errors"
+	"sync"
+	"github.com/gordonseto/soundvis-server/dbsession"
 )
 
 type StationsRepository struct {
 	session *mgo.Session
 }
 
-func NewStationsRepository(s *mgo.Session) *StationsRepository {
-	return &StationsRepository{s}
+var instance *StationsRepository
+var once sync.Once
+
+func Shared() *StationsRepository {
+	once.Do(func() {
+		instance = &StationsRepository{dbsession.Shared()}
+	})
+	return instance
 }
 
 func (sr *StationsRepository) GetStationsRepository() *mgo.Collection {

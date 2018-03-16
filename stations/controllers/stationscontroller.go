@@ -12,7 +12,6 @@ import (
 
 type (
 	StationsController struct {
-		stationsRepository *stationsrepository.StationsRepository
 	}
 )
 
@@ -20,13 +19,13 @@ func (sc StationsController) GETPath() string {
 	return "/stations"
 }
 
-func NewStationsController(sr *stationsrepository.StationsRepository) *StationsController {
-	return &StationsController{sr}
+func NewStationsController() *StationsController {
+	return &StationsController{}
 }
 
 func (sc *StationsController) GetStations(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	stations := make([]models.Station, 0)
-	err := sc.stationsRepository.GetStationsRepository().Find(nil).All(&stations)
+	err := stationsrepository.Shared().GetStationsRepository().Find(nil).All(&stations)
 	if err != nil {
 		panic(err)
 	}

@@ -1,26 +1,29 @@
-package streamjobs
+package streamjobmanager
 
 import (
 	models2 "github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/stream/IO"
 	"github.com/gordonseto/soundvis-server/stream/models"
-	"github.com/gordonseto/soundvis-server/streammanager"
 	"github.com/gordonseto/soundvis-server/users/models"
-	"github.com/gordonseto/soundvis-server/users/repositories"
 	"log"
 	"github.com/gordonseto/soundvis-server/notifications"
+	"sync"
+	"github.com/gordonseto/soundvis-server/users/repositories"
+	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/socketmanager"
 )
 
 type StreamJobManager struct {
-	userRepository     *usersrepository.UsersRepository
-	streamManager      *streammanager.StreamManager
-	socketManager *socketmanager.SocketManager
 	previousPlayingMap map[string]string
 }
 
-func NewStreamJobManager(ur *usersrepository.UsersRepository, stm *streammanager.StreamManager, skm *socketmanager.SocketManager) *StreamJobManager {
-	return &StreamJobManager{ur, stm, skm, make(map[string]string)}
+var instance *StreamJobManager
+var once sync.Once
+func Shared() *StreamJobManager {
+	once.Do(func() {
+		instance = &StreamJobManager{make(map[string]string)}
+	})
+	return instance
 }
 
 func StreamJobName() string {
@@ -30,7 +33,7 @@ func StreamJobName() string {
 // fetches currentPlaying for all users with currentPlaying = true
 // sends socket message and android notification if song has changed
 func (sjm *StreamJobManager) RefreshNowPlaying() {
-	users, err := sjm.userRepository.FindUsersByIsPlaying(true)
+	users, err := usersrepository.Shared().FindUsersByIsPlaying(true)
 	if err != nil {
 		log.Println(err)
 		return
@@ -44,7 +47,7 @@ func (sjm *StreamJobManager) RefreshNowPlaying() {
 // and notification to user
 func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 	// get the current station and song playing for user
-	station, song, err := sjm.streamManager.GetCurrentStationAndSongPlaying(user.CurrentPlaying)
+	station, song, err := streamhelper.GetCurrentStationAndSongPlaying(user.CurrentPlaying)
 	if err != nil {
 		log.Println(err)
 		return
@@ -61,13 +64,13 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 		response.IsPlaying = user.IsPlaying
 		response.CurrentStation = station
 		response.CurrentSong = song
-		response.CurrentStreamURL = sjm.streamManager.GetStreamURL(user.CurrentPlaying, station)
+		response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
 		log.Println(response.CurrentStation.Name + " - " + response.CurrentSong.Name)
 
 		// send android notification
 		notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
 		// send socket message
-		sjm.socketManager.SendStreamUpdateMessage(user.Id.Hex(), response)
+		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), response)
 	}
 	// set previousPlaying to current song
 	sjm.previousPlayingMap[user.Id.Hex()] = stringified

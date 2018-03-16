@@ -8,59 +8,35 @@ import (
 	"fmt"
 	"encoding/json"
 	"github.com/gordonseto/soundvis-server/users/controllers"
-	"gopkg.in/mgo.v2"
 	"github.com/gordonseto/soundvis-server/stream/controllers"
-	"github.com/gordonseto/soundvis-server/users/repositories"
-	"github.com/gordonseto/soundvis-server/stations/repositories"
 	//"github.com/gordonseto/soundvis-server/stationsfetcher"
 	"github.com/gordonseto/soundvis-server/socketmanager"
 	"github.com/gordonseto/soundvis-server/jobmanager"
-	"github.com/gordonseto/soundvis-server/streamjobs"
-	"github.com/gordonseto/soundvis-server/streammanager"
 )
 
 func main() {
 	r := httprouter.New()
 	r.PanicHandler = handleError
 
-	dbSession := getSession()
-
-	stationsRepository := stationsrepository.NewStationsRepository(dbSession)
-	usersRepository := usersrepository.NewUsersRepository(dbSession)
-
-	streamManager := streammanager.NewStreamManager(stationsRepository)
-	socketManager := socketmanager.NewSocketManager()
-
-	stationsController := stations.NewStationsController(stationsRepository)
-	usersController := users.NewUsersController(usersRepository)
-	streamsController := stream.NewStreamController(usersRepository, socketManager, streamManager)
+	stationsController := stations.NewStationsController()
+	usersController := users.NewUsersController()
+	streamsController := stream.NewStreamController()
 
 	r.GET(stationsController.GETPath(), stationsController.GetStations)
 	r.POST(usersController.POSTPath(), usersController.CreateUser)
 	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
 	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
 
-	r.POST(socketManager.POSTPath(), socketManager.Connect)
+	r.POST(socketmanager.Shared().POSTPath(), socketmanager.Shared().Connect)
 	//stationsfetcher.FetchAndStoreStations(stationsRepository)
 
-	jobManager := jobmanager.NewJobManager()
-	streamJobManager := streamjobs.NewStreamJobManager(usersRepository, streamManager, socketManager)
-	jobManager.RegisterStreamJobs(streamJobManager)
+	jobmanager.Shared().RegisterStreamJobs()
 
 	go func(){
-		jobManager.Start()
+		jobmanager.Shared().Start()
 	}()
 
 	http.ListenAndServe(config.PORT, r)
-}
-
-func getSession() *mgo.Session {
-	s, err := mgo.Dial(config.DB_ADDRESS)
-
-	if err != nil {
-		panic(err)
-	}
-	return s
 }
 
 func handleError(w http.ResponseWriter, r *http.Request, err interface{}) {

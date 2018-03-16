@@ -15,12 +15,11 @@ import (
 
 type (
 	UsersController struct{
-		usersRepository *usersrepository.UsersRepository
 	}
 )
 
-func NewUsersController(ur *usersrepository.UsersRepository) *UsersController {
-	return &UsersController{ur}
+func NewUsersController() *UsersController {
+	return &UsersController{}
 }
 
 func (uc *UsersController) POSTPath() string {
@@ -43,17 +42,17 @@ func (uc *UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p 
 
 	// find user in database, if already contained, just return user
 	user := models.User{}
-	if err := uc.usersRepository.FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
+	if err := usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
 		// no user found, create user
 		user.Id = bson.NewObjectId()
 		user.DeviceToken = request.DeviceToken
 		user.CreatedAt = time.Now().Unix()
 		// insert into collection
-		if err = uc.usersRepository.GetUsersRepository().Insert(user); err != nil {
+		if err = usersrepository.Shared().GetUsersRepository().Insert(user); err != nil {
 			panic(err)
 		}
 		// find user in collection
-		if err = uc.usersRepository.FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
+		if err = usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
 			// if not found this time, there is an error
 			panic(err)
 		}

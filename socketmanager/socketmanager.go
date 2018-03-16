@@ -8,14 +8,21 @@ import (
 	"errors"
 	"github.com/gordonseto/soundvis-server/stream/IO"
 	"fmt"
+	"sync"
 )
 
 type SocketManager struct {
 	connections map[string]*websocket.Conn
 }
 
-func NewSocketManager() *SocketManager {
-	return &SocketManager{connections: make(map[string]*websocket.Conn)}
+var instance *SocketManager
+var once sync.Once
+
+func Shared() *SocketManager {
+	once.Do(func() {
+		instance = &SocketManager{make(map[string]*websocket.Conn)}
+	})
+	return instance
 }
 
 func (sm *SocketManager) POSTPath() string {
