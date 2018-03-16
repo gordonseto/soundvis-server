@@ -12,6 +12,7 @@ import (
 	//"github.com/gordonseto/soundvis-server/stationsfetcher"
 	"github.com/gordonseto/soundvis-server/socketmanager"
 	"github.com/gordonseto/soundvis-server/jobmanager"
+	"github.com/gordonseto/soundvis-server/recordings/controllers"
 )
 
 func main() {
@@ -21,11 +22,14 @@ func main() {
 	stationsController := stations.NewStationsController()
 	usersController := users.NewUsersController()
 	streamsController := stream.NewStreamController()
+	recordingsController := recordings.NewRecordingsController()
 
 	r.GET(stationsController.GETPath(), stationsController.GetStations)
 	r.POST(usersController.POSTPath(), usersController.CreateUser)
 	r.GET(streamsController.GETPath(), streamsController.GetCurrentStream)
 	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
+	r.GET(recordingsController.GETPath(), recordingsController.GetRecordings)
+	r.POST(recordingsController.POSTPath(), recordingsController.CreateRecording)
 
 	r.POST(socketmanager.Shared().POSTPath(), socketmanager.Shared().Connect)
 	//stationsfetcher.FetchAndStoreStations(stationsRepository)

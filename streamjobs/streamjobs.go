@@ -19,6 +19,8 @@ type StreamJobManager struct {
 
 var instance *StreamJobManager
 var once sync.Once
+var mutex = &sync.Mutex{}
+
 func Shared() *StreamJobManager {
 	once.Do(func() {
 		instance = &StreamJobManager{make(map[string]string)}
@@ -56,7 +58,9 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 	// concatenate into string
 	stringified := stationAndSongToString(station, song)
 	// get station and song already stored in map for user
+	mutex.Lock()
 	previousPlaying, _ := sjm.previousPlayingMap[user.Id.Hex()]
+	mutex.Unlock()
 
 	// if previousPlaying has changed, a new song is playing
 	if previousPlaying != stringified {
@@ -73,7 +77,9 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), response)
 	}
 	// set previousPlaying to current song
+	mutex.Lock()
 	sjm.previousPlayingMap[user.Id.Hex()] = stringified
+	mutex.Unlock()
 }
 
 // concatenates together station and song for comparison

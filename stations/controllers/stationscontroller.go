@@ -3,11 +3,10 @@ package stations
 import (
 	"net/http"
 	"github.com/julienschmidt/httprouter"
-	"fmt"
-	"encoding/json"
 	"github.com/gordonseto/soundvis-server/stations/IO"
 	"github.com/gordonseto/soundvis-server/stations/repositories"
 	"github.com/gordonseto/soundvis-server/stations/models"
+	"github.com/gordonseto/soundvis-server/general"
 )
 
 type (
@@ -32,12 +31,5 @@ func (sc *StationsController) GetStations(w http.ResponseWriter, r *http.Request
 
 	// Send response back
 	response := stationsIO.GetStationsResponse{stations}
-	responseJSON, err := json.Marshal(&response)
-	if err != nil {
-		panic(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "%s", responseJSON)
+	basecontroller.SendResponse(w, response)
 }
