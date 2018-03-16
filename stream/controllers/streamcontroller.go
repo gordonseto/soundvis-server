@@ -5,23 +5,20 @@ import (
 	"github.com/gordonseto/soundvis-server/authentication"
 	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/notifications"
-	"github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/stream/IO"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"github.com/gordonseto/soundvis-server/users/repositories"
-	"github.com/gordonseto/soundvis-server/stations/repositories"
-	"github.com/gordonseto/soundvis-server/stream/models"
-	"github.com/gordonseto/soundvis-server/stationsfetcher"
 	"fmt"
 	"github.com/gordonseto/soundvis-server/socketmanager"
+	"github.com/gordonseto/soundvis-server/streammanager"
 )
 
 type (
 	StreamController struct {
 		usersRepository *usersrepository.UsersRepository
-		stationsRepository *stationsrepository.StationsRepository
 		socketManager *socketmanager.SocketManager
+		streamManager *streammanager.StreamManager
 	}
 )
 
@@ -33,8 +30,8 @@ func (sc *StreamController) POSTPath() string {
 	return "/stream"
 }
 
-func NewStreamController(ur *usersrepository.UsersRepository, sr *stationsrepository.StationsRepository, sm *socketmanager.SocketManager) *StreamController {
-	return &StreamController{ur, sr, sm}
+func NewStreamController(ur *usersrepository.UsersRepository, skm *socketmanager.SocketManager, stm *streammanager.StreamManager) *StreamController {
+	return &StreamController{ur, skm, stm}
 }
 
 func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -46,17 +43,17 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
 
-	response.CurrentStation, err =  sc.getStation(user.CurrentPlaying)
+	response.CurrentStation, err =  sc.streamManager.GetStation(user.CurrentPlaying)
 	if err != nil {
 		panic(err)
 	}
 
-	response.CurrentSong, err = sc.getCurrentSongPlaying(user.CurrentPlaying, response.CurrentStation)
+	response.CurrentSong, err = sc.streamManager.GetCurrentSongPlaying(user.CurrentPlaying, response.CurrentStation)
 	if err != nil {
 		panic(err)
 	}
 
-	response.CurrentStreamURL = getStreamURL(user.CurrentPlaying, response.CurrentStation)
+	response.CurrentStreamURL = sc.streamManager.GetStreamURL(user.CurrentPlaying, response.CurrentStation)
 
 	basecontroller.SendResponse(w, response)
 }
@@ -82,7 +79,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	}
 
 	// check if stream is valid
-	station, err := sc.getStation(request.CurrentStream)
+	station, err := sc.streamManager.GetStation(request.CurrentStream)
 	if err != nil {
 		panic(err)
 	}
@@ -101,8 +98,8 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
 	response.CurrentStation = station
-	response.CurrentStreamURL = getStreamURL(user.CurrentPlaying, station)
-	response.CurrentSong, err = sc.getCurrentSongPlaying(user.CurrentPlaying, station)
+	response.CurrentStreamURL = sc.streamManager.GetStreamURL(user.CurrentPlaying, station)
+	response.CurrentSong, err = sc.streamManager.GetCurrentSongPlaying(user.CurrentPlaying, station)
 	if err != nil {
 		panic(err)
 	}
@@ -122,53 +119,4 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	}
 
 	basecontroller.SendResponse(w, response)
-}
-
-// gets the audio stream url from currentPlaying
-// currentPlaying is the id of a station or recording
-func getStreamURL(currentPlaying string, currentStation *models.Station) string {
-	if currentPlaying == "" {
-		return ""
-	}
-	if currentPlayingIsRecording(currentPlaying) {
-		// TODO: Implement this
-		return ""
-	} else {
-		return currentStation.StreamURL
-	}
-}
-
-func currentPlayingIsRecording(currentPlaying string) bool {
-	if currentPlaying == "" {
-		return false
-	}
-	return false
-}
-
-// currentPlaying is an id for a station or recording
-func (sc *StreamController) getStation(currentPlaying string) (*models.Station, error) {
-	if currentPlaying == "" {
-		return nil, nil
-	}
-
-	if currentPlayingIsRecording(currentPlaying) {
-		// TODO: Implement this
-		return nil, nil
-	} else {
-		return sc.stationsRepository.FindStationById(currentPlaying)
-	}
-}
-
-// currentPlaying is an id for a station or recording
-func (sc *StreamController) getCurrentSongPlaying(currentPlaying string, station *models.Station) (*stream.Song, error) {
-	if currentPlaying == "" {
-		return nil, nil
-	}
-
-	if currentPlayingIsRecording(currentPlaying) {
-		// TODO: Implement this
-		return nil, nil
-	} else {
-		return stationsfetcher.GetCurrentSongPlayingShoutcast(station.StreamURL)
-	}
 }

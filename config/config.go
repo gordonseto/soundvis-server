@@ -6,3 +6,4 @@ var DB_ADDRESS = "mongodb://notadmin:notpassword@ds117271.mlab.com:17271/soundvi
 var DB_NAME = "soundvis"
 var FIREBASE_SERVER_KEY = "AAAAl2ABOSs:APA91bGBfN2e0BfZwVwvGW1pk85HNrOofFtxmNc6tXTUJZzliYVDZtT8rJKHaA3csrDHVSinbmYyWif5Zc2tMmcdT_I6I_rlANC3Yl6dBVaVs1CEnqQKQ993YP7G1UMRCrnBz6DweuKz"
 var SHOUTCAST_API_KEY = "t7kGHgPoxtvtuUOc"
+var REDIS_NAMESPACE = "soundvis"

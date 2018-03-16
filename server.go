@@ -14,6 +14,9 @@ import (
 	"github.com/gordonseto/soundvis-server/stations/repositories"
 	//"github.com/gordonseto/soundvis-server/stationsfetcher"
 	"github.com/gordonseto/soundvis-server/socketmanager"
+	"github.com/gordonseto/soundvis-server/jobmanager"
+	"github.com/gordonseto/soundvis-server/streamjobs"
+	"github.com/gordonseto/soundvis-server/streammanager"
 )
 
 func main() {
@@ -22,14 +25,15 @@ func main() {
 
 	dbSession := getSession()
 
-	socketManager := socketmanager.NewSocketManager()
-
 	stationsRepository := stationsrepository.NewStationsRepository(dbSession)
 	usersRepository := usersrepository.NewUsersRepository(dbSession)
 
+	streamManager := streammanager.NewStreamManager(stationsRepository)
+	socketManager := socketmanager.NewSocketManager()
+
 	stationsController := stations.NewStationsController(stationsRepository)
 	usersController := users.NewUsersController(usersRepository)
-	streamsController := stream.NewStreamController(usersRepository, stationsRepository, socketManager)
+	streamsController := stream.NewStreamController(usersRepository, socketManager, streamManager)
 
 	r.GET(stationsController.GETPath(), stationsController.GetStations)
 	r.POST(usersController.POSTPath(), usersController.CreateUser)
@@ -38,6 +42,14 @@ func main() {
 
 	r.POST(socketManager.POSTPath(), socketManager.Connect)
 	//stationsfetcher.FetchAndStoreStations(stationsRepository)
+
+	jobManager := jobmanager.NewJobManager()
+	streamJobManager := streamjobs.NewStreamJobManager(usersRepository)
+	jobManager.RegisterStreamJobs(streamJobManager)
+
+	go func(){
+		jobManager.Start()
+	}()
 
 	http.ListenAndServe(config.PORT, r)
 }

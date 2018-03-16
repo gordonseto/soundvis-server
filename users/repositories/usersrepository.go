@@ -40,3 +40,9 @@ func (ur *UsersRepository) FindUserByDeviceToken(deviceToken string, user *model
 func (ur *UsersRepository) UpdateUser(user *models.User) error {
 	return ur.GetUsersRepository().Update(bson.M{"_id": user.Id}, user)
 }
+
+func (ur *UsersRepository) FindUsersByIsPlaying(isPlaying bool) ([]models.User, error) {
+	users := make([]models.User, 0)
+	err := ur.GetUsersRepository().Find(bson.M{"isPlaying": isPlaying}).All(&users)
+	return users, err
+}
