@@ -10,6 +10,7 @@ import (
 	"time"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"errors"
+	"github.com/gordonseto/soundvis-server/recordingsstream"
 )
 
 type RecordingJobsManager struct {
@@ -39,8 +40,10 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	}
 	streamURL := station.StreamURL
 
+
 	// create the file
-	file, err := os.Create("output.mp3")
+	fileName := recordingsstream.GetRecordingFileNameFromId(recordingId)
+	file, err := os.Create(fileName)
 	if err != nil {
 		return errors.New("Error creating file for recordingId: " + recordingId)
 	}
