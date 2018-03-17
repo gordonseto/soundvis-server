@@ -8,6 +8,8 @@ import (
 	"os"
 	"sync"
 	"time"
+	"github.com/gordonseto/soundvis-server/streamhelper"
+	"errors"
 )
 
 type RecordingJobsManager struct {
@@ -28,76 +30,43 @@ func RecordingJobName() string {
 	return "recording_job"
 }
 
-func (rjm *RecordingJobsManager) RecordStream() {
-	streamURL := "http://138.201.248.219:8018/stream"
-	startDate := time.Now().Unix()
-	endDate := time.Now().Unix() + 30
+func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId string, startDate int64, endDate int64) error {
+	station, err := streamhelper.GetStation(stationId)
+	if err != nil {
+		return errors.New("Error getting station in recording job, recordingId: " + recordingId)
+	}
+	streamURL := station.StreamURL
 
 	file, err := os.Create("output.mp3")
 	if err != nil {
-		panic(err)
+		return errors.New("Error creating file for recordingId: " + recordingId)
 	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer file.Close()
 
 	for time.Now().Unix() < startDate {
-		fmt.Println("waiting for startDate")
+		fmt.Println("Waiting for startDate, recordingId: " + recordingId)
 	}
+
+	log.Println("Duration: ", endDate - time.Now().Unix())
 
 	resp, err := http.Get(streamURL)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	reader := bufio.NewReader(resp.Body)
 	for time.Now().Unix() < endDate {
 		b, err := reader.ReadByte()
 		if err != nil {
-			fmt.Println(err)
+			return err
 		} else {
-			log.Println(b)
+			if time.Now().Unix() > endDate {
+				break
+			}
 			if _, err := file.Write([]byte{b}); err != nil {
-				fmt.Println(err)
+				return err
 			}
 		}
 	}
-}
-
-func (rjm *RecordingJobsManager) Test() {
-	fmt.Println("Hello World!")
-
-	file, err := os.Create("output.mp3")
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
-	start := time.Now().Unix()
-
-	resp, err := http.Get("http://138.201.248.219:8018/stream")
-	if err != nil {
-		fmt.Println(err)
-	}
-	reader := bufio.NewReader(resp.Body)
-	for {
-		b, err := reader.ReadByte()
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			log.Println(b)
-			if _, err := file.Write([]byte{b}); err != nil {
-				fmt.Println(err)
-			}
-		}
-		now := time.Now().Unix()
-		if now-start > 10 {
-			return
-		}
-	}
+	log.Println("Done recording for recordingId: ", recordingId)
+	return nil
 }

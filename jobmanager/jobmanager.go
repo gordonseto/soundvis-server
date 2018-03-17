@@ -90,7 +90,7 @@ func (jm *JobManager) RegisterRecordingJobs() {
 }
 
 func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
-	log.Println("Adding recordingJob - recordingId: " + recording.Id.Hex())
+	log.Println("Adding recordingJob - recordingId: " + recording.Id.Hex() + ", set to run at ", recording.StartDate)
 
 	now := time.Now().Unix()
 	secondsFromNow := recording.StartDate - now
@@ -98,17 +98,21 @@ func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
 		secondsFromNow = 0
 	}
 
-	log.Println("Seconds from now: ", secondsFromNow)
-
 	_, err := enqueuer.EnqueueIn(recordingjobsmanager.RecordingJobName(), secondsFromNow, work.Q{"id": recording.Id.Hex(), "stationId": recording.StationId, "startDate": recording.StartDate, "endDate": recording.EndDate})
 	return err
 }
 
 func (c *Context) runRecordingJob(job *work.Job) error {
 	id := job.ArgString("id")
-	//stationId := job.ArgString("stationId")
-	//startDate := job.ArgInt64("startDate")
-	//endDate := job.ArgInt64("endDate")
+	stationId := job.ArgString("stationId")
+	startDate := job.ArgInt64("startDate")
+	endDate := job.ArgInt64("endDate")
 	log.Println("Running recordingJob - recordingId: " + id)
-	return nil
+
+	err := recordingjobsmanager.Shared().RecordStream(id, stationId, startDate, endDate)
+	if err != nil {
+		log.Println("Error for recording job, recordingId: ", id)
+		log.Println(err)
+	}
+	return err
 }
