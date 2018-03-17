@@ -89,7 +89,7 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 		request.Title = station.Name
 	}
 	recording := &models.Recording{
-		Id: bson.NewObjectId(),
+		Id: bson.NewObjectId().Hex(),
 		Title: request.Title,
 		CreatorId: user.Id.Hex(),
 		StationId: request.StationId,

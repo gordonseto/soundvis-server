@@ -1,12 +1,11 @@
 package models
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"github.com/gordonseto/soundvis-server/stations/models"
 )
 
 type Recording struct {
-	Id bson.ObjectId	`json:"id" bson:"_id"`
+	Id string	`json:"id" bson:"_id"`
 	Title string	`json:"title" bson:"title"`
 	CreatorId string `json:"creatorId" bson:"creatorId"`
 	StationId string	`json:"stationId" bson:"stationId"`	// this does not get sent to client

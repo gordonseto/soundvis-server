@@ -92,7 +92,7 @@ func (jm *JobManager) RegisterRecordingJobs() {
 
 // adds a new recordingjob to be executed at recording.StartDate
 func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
-	log.Println("Adding recordingJob - recordingId: " + recording.Id.Hex() + ", set to run at ", recording.StartDate)
+	log.Println("Adding recordingJob - recordingId: " + recording.Id + ", set to run at ", recording.StartDate)
 
 	now := time.Now().Unix()
 	secondsFromNow := recording.StartDate - now
@@ -101,7 +101,7 @@ func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
 	}
 
 	// enqueue the job
-	_, err := enqueuer.EnqueueIn(recordingjobsmanager.RecordingJobName(), secondsFromNow, work.Q{"id": recording.Id.Hex(), "stationId": recording.StationId, "startDate": recording.StartDate, "endDate": recording.EndDate})
+	_, err := enqueuer.EnqueueIn(recordingjobsmanager.RecordingJobName(), secondsFromNow, work.Q{"id": recording.Id, "stationId": recording.StationId, "startDate": recording.StartDate, "endDate": recording.EndDate})
 	return err
 }
 

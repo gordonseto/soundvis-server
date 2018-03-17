@@ -11,6 +11,8 @@ import (
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"errors"
 	"github.com/gordonseto/soundvis-server/recordingsstream"
+	"github.com/gordonseto/soundvis-server/recordings/repositories"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type RecordingJobsManager struct {
@@ -80,5 +82,15 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 		}
 	}
 	log.Println("Done recording for recordingId: ", recordingId)
+
+	// update with recordingURL
+	recordingURL := recordingsstream.GetRecordingStreamPath(recordingId)
+	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL}})
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("Finished processing recordingId: ", recordingId)
 	return nil
 }

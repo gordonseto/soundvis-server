@@ -44,3 +44,7 @@ func (rsc *RecordingsStreamController) StreamRecording(w http.ResponseWriter, r 
 func GetRecordingFileNameFromId(recordingId string) string {
 	return "files/recordings/" + recordingId + ".mp3"
 }
+
+func GetRecordingStreamPath(recordingId string) string {
+	return "/recordings/stream/" + recordingId
+}
