@@ -85,10 +85,12 @@ func (jm *JobManager) enqueueStreamJob() error {
 	return err
 }
 
+// adds recordingJob handler to jobManager
 func (jm *JobManager) RegisterRecordingJobs() {
 	pool.Job(recordingjobsmanager.RecordingJobName(), (*Context).runRecordingJob)
 }
 
+// adds a new recordingjob to be executed at recording.StartDate
 func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
 	log.Println("Adding recordingJob - recordingId: " + recording.Id.Hex() + ", set to run at ", recording.StartDate)
 
@@ -98,17 +100,21 @@ func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
 		secondsFromNow = 0
 	}
 
+	// enqueue the job
 	_, err := enqueuer.EnqueueIn(recordingjobsmanager.RecordingJobName(), secondsFromNow, work.Q{"id": recording.Id.Hex(), "stationId": recording.StationId, "startDate": recording.StartDate, "endDate": recording.EndDate})
 	return err
 }
 
+// runs the recording job
 func (c *Context) runRecordingJob(job *work.Job) error {
+	// get parameters saved when job was enqueued
 	id := job.ArgString("id")
 	stationId := job.ArgString("stationId")
 	startDate := job.ArgInt64("startDate")
 	endDate := job.ArgInt64("endDate")
 	log.Println("Running recordingJob - recordingId: " + id)
 
+	// record the stream
 	err := recordingjobsmanager.Shared().RecordStream(id, stationId, startDate, endDate)
 	if err != nil {
 		log.Println("Error for recording job, recordingId: ", id)
