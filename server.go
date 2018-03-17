@@ -34,7 +34,8 @@ func main() {
 	r.POST(socketmanager.Shared().POSTPath(), socketmanager.Shared().Connect)
 	//stationsfetcher.FetchAndStoreStations(stationsrepository.Shared())
 
-	jobmanager.Shared().RegisterStreamJobs()
+	//jobmanager.Shared().RegisterStreamJobs()
+	jobmanager.Shared().RegisterRecordingJobs()
 
 	go func(){
 		jobmanager.Shared().Start()

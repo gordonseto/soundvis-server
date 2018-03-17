@@ -1,9 +1,11 @@
 package recordingsIO
 
-import "github.com/gordonseto/soundvis-server/recordings/models"
+import (
+	"github.com/gordonseto/soundvis-server/recordings/models"
+)
 
 type GetRecordingsResponse struct {
-	Recordings []models.Recording `json:"recordings"`
+	Recordings []*models.Recording `json:"recordings"`
 }
 
 type CreateRecordingRequest struct {

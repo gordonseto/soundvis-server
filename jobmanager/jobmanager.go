@@ -8,6 +8,10 @@ import (
 	"os/signal"
 	"github.com/gordonseto/soundvis-server/config"
 	"sync"
+	"github.com/gordonseto/soundvis-server/recordingjobsmanager"
+	"github.com/gordonseto/soundvis-server/recordings/models"
+	"log"
+	"time"
 )
 
 type JobManager struct {
@@ -79,4 +83,32 @@ func (c *Context) runStreamJob(job *work.Job) error {
 func (jm *JobManager) enqueueStreamJob() error {
 	_, err := enqueuer.EnqueueUniqueIn(streamjobmanager.StreamJobName(), STREAM_JOB_INTERVAL, nil)
 	return err
+}
+
+func (jm *JobManager) RegisterRecordingJobs() {
+	pool.Job(recordingjobsmanager.RecordingJobName(), (*Context).runRecordingJob)
+}
+
+func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
+	log.Println("Adding recordingJob - recordingId: " + recording.Id.Hex())
+
+	now := time.Now().Unix()
+	secondsFromNow := recording.StartDate - now
+	if secondsFromNow < 0 {
+		secondsFromNow = 0
+	}
+
+	log.Println("Seconds from now: ", secondsFromNow)
+
+	_, err := enqueuer.EnqueueIn(recordingjobsmanager.RecordingJobName(), secondsFromNow, work.Q{"id": recording.Id.Hex(), "stationId": recording.StationId, "startDate": recording.StartDate, "endDate": recording.EndDate})
+	return err
+}
+
+func (c *Context) runRecordingJob(job *work.Job) error {
+	id := job.ArgString("id")
+	//stationId := job.ArgString("stationId")
+	//startDate := job.ArgInt64("startDate")
+	//endDate := job.ArgInt64("endDate")
+	log.Println("Running recordingJob - recordingId: " + id)
+	return nil
 }

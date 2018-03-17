@@ -27,8 +27,8 @@ func (rr *RecordingsRepository) GetRecordingsRepository() *mgo.Collection {
 	return rr.session.DB(config.DB_NAME).C("recordings")
 }
 
-func (rr *RecordingsRepository) FindRecordingsByCreatorId(creatorId string) ([]models.Recording, error) {
-	recordings := make([]models.Recording, 0)
+func (rr *RecordingsRepository) FindRecordingsByCreatorId(creatorId string) ([]*models.Recording, error) {
+	recordings := make([]*models.Recording, 0)
 	err := rr.GetRecordingsRepository().Find(bson.M{"creatorId": creatorId}).All(&recordings)
 	return recordings, err
 }

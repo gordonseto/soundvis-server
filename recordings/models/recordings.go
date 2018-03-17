@@ -9,7 +9,8 @@ type Recording struct {
 	Id bson.ObjectId	`json:"id" bson:"_id"`
 	Title string	`json:"title" bson:"title"`
 	CreatorId string `json:"creatorId" bson:"creatorId"`
-	Station *models.Station	`json:"station" bson:"station"`
+	StationId string	`json:"stationId" bson:"stationId"`	// this does not get sent to client
+	Station *models.Station	`json:"station"`	// this is not saved in database
 	StartDate int64	`json:"startDate" bson:"startDate"`
 	EndDate int64	`json:"endDate" bson:"endDate"`
 	RecordingURL string 	`json:"recordingUrl" bson:"recordingUrl"`

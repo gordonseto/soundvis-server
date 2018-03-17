@@ -13,6 +13,7 @@ import (
 	"github.com/gordonseto/soundvis-server/recordings/models"
 	"gopkg.in/mgo.v2/bson"
 	"time"
+	"github.com/gordonseto/soundvis-server/jobmanager"
 )
 
 type (
@@ -41,6 +42,14 @@ func (rc *RecordingsController) GetRecordings(w http.ResponseWriter, r *http.Req
 	recordings, err := recordingsrepository.Shared().FindRecordingsByCreatorId(user.Id.Hex())
 	if err != nil {
 		panic(err)
+	}
+
+	// for each recording, get the station corresponding to their stationId
+	for _, recording := range recordings {
+		recording.Station, err = streamhelper.GetStation(recording.StationId)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	response := recordingsIO.GetRecordingsResponse{}
@@ -83,11 +92,17 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 		Id: bson.NewObjectId(),
 		Title: request.Title,
 		CreatorId: user.Id.Hex(),
-		Station: station,
+		StationId: request.StationId,
 		StartDate: request.StartDate,
 		EndDate: request.EndDate,
 		CreatedAt: time.Now().Unix(),
 		UpdatedAt: time.Now().Unix(),
+	}
+
+	// add recording job
+	err = jobmanager.Shared().AddRecordingJob(recording)
+	if err != nil {
+		panic(err)
 	}
 
 	// insert into repository
@@ -99,5 +114,6 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 	// send response
 	response := recordingsIO.CreateRecordingResponse{}
 	response.Recording = recording
+	response.Recording.Station = station
 	basecontroller.SendResponse(w, response)
 }
