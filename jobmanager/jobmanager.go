@@ -114,6 +114,11 @@ func (c *Context) runRecordingJob(job *work.Job) error {
 	endDate := job.ArgInt64("endDate")
 	log.Println("Running recordingJob - recordingId: " + id)
 
+	if endDate < time.Now().Unix() {
+		log.Println("Recording end date has already passed, finishing - recordingId: " + id)
+		return nil
+	}
+
 	// record the stream
 	err := recordingjobsmanager.Shared().RecordStream(id, stationId, startDate, endDate)
 	if err != nil {

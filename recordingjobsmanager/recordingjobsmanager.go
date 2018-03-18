@@ -42,7 +42,6 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	}
 	streamURL := station.StreamURL
 
-
 	// create the file
 	fileName := recordingsstream.GetRecordingFileNameFromId(recordingId)
 	file, err := os.Create(fileName)
@@ -65,6 +64,7 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	}
 	reader := bufio.NewReader(resp.Body)
 
+	stream := make([]byte, 0)
 	// keep streaming until endDate has passed
 	for time.Now().Unix() < endDate {
 		// read the audio byte
@@ -75,15 +75,19 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 			if time.Now().Unix() > endDate {
 				break
 			}
-			// save to file
-			if _, err := file.Write([]byte{b}); err != nil {
-				return err
-			}
+			// append to array
+			stream = append(stream, b)
 		}
 	}
+
 	log.Println("Done recording for recordingId: ", recordingId)
 
-	// update with recordingURL
+	// save byte array
+	if _, err := file.Write(stream); err != nil {
+		return err
+	}
+
+	// update recording with recordingURL
 	recordingURL := recordingsstream.GetRecordingStreamPath(recordingId)
 	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL}})
 

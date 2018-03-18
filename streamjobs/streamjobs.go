@@ -11,7 +11,6 @@ import (
 	"github.com/gordonseto/soundvis-server/users/repositories"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/socketmanager"
-	"fmt"
 )
 
 type StreamJobManager struct {
@@ -42,7 +41,7 @@ func (sjm *StreamJobManager) RefreshNowPlaying() {
 		return
 	}
 	for _, user := range users {
-		fmt.Println(user.Id.Hex())
+		//fmt.Println(user.Id.Hex())
 		go sjm.checkNowPlayingForUser(user)
 	}
 }
