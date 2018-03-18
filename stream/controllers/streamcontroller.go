@@ -39,6 +39,7 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
+	response.CurrentPlaying = user.CurrentPlaying
 
 	response.CurrentStation, response.CurrentSong, err =  streamhelper.GetCurrentStationAndSongPlaying(user.CurrentPlaying)
 	if err != nil {
@@ -89,6 +90,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	// create response
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
+	response.CurrentPlaying = user.CurrentPlaying
 	response.CurrentStation = station
 	response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
 	response.CurrentSong, err = streamhelper.GetCurrentSongPlaying(user.CurrentPlaying, station)
