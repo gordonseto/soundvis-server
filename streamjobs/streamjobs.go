@@ -56,6 +56,11 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 		return
 	}
 
+	if station == nil || song == nil {
+		log.Println("Station or song is nil")
+		return
+	}
+
 	// concatenate into string
 	stringified := stationAndSongToString(station, song)
 	// get station and song already stored in map for user

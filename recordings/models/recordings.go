@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/gordonseto/soundvis-server/stations/models"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Recording struct {
@@ -16,4 +17,20 @@ type Recording struct {
 	Progress int64	`json:"progress" bson:"recording"`
 	CreatedAt int64	`json:"createdAt" bson:"createdAt"`
 	UpdatedAt int64	`json:"updatedAt" bson:"updatedAt"`
+}
+
+var RECORDING_ID_SUFFIX = "RSV"
+
+// creates a recordingId
+func CreateRecordingId() string {
+	return bson.NewObjectId().Hex() + RECORDING_ID_SUFFIX
+}
+
+// returns true if id is a recordingId
+func IdIsRecording(id string) bool {
+	if len(id) < len(RECORDING_ID_SUFFIX) {
+		return false
+	}
+	// RECORDING_ID_SUFFIX is at end of array, return true if last part of id == RECORDING_ID_SUFFIX
+	return id[len(id)-len(RECORDING_ID_SUFFIX):] == RECORDING_ID_SUFFIX
 }

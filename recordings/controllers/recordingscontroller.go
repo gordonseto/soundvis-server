@@ -11,7 +11,6 @@ import (
 	"errors"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/recordings/models"
-	"gopkg.in/mgo.v2/bson"
 	"time"
 	"github.com/gordonseto/soundvis-server/jobmanager"
 	"sync"
@@ -49,8 +48,8 @@ func (rc *RecordingsController) GetRecordings(w http.ResponseWriter, r *http.Req
 
 	// for each recording, get the station corresponding to their stationId
 	for _, recording := range recordings {
+		waitGroup.Add(1)
 		go func(){
-			waitGroup.Add(1)
 			recording.Station, err = streamhelper.GetStation(recording.StationId)
 			if err != nil {
 				panic(err)
@@ -99,7 +98,7 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 		request.Title = station.Name
 	}
 	recording := &models.Recording{
-		Id: bson.NewObjectId().Hex(),
+		Id: models.CreateRecordingId(),
 		Title: request.Title,
 		CreatorId: user.Id.Hex(),
 		StationId: request.StationId,

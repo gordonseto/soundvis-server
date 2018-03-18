@@ -5,6 +5,10 @@ import (
 	"github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/stream/models"
 	"github.com/gordonseto/soundvis-server/stations/repositories"
+	models2 "github.com/gordonseto/soundvis-server/recordings/models"
+	"github.com/gordonseto/soundvis-server/recordings/repositories"
+	"errors"
+	"log"
 )
 
 // gets the audio stream url from currentPlaying
@@ -14,8 +18,12 @@ func GetStreamURL(currentPlaying string, currentStation *models.Station) string 
 		return ""
 	}
 	if currentPlayingIsRecording(currentPlaying) {
-		// TODO: Implement this
-		return ""
+		recording, err := recordingsrepository.Shared().FindRecordingById(currentPlaying)
+		if err != nil {
+			log.Println("Recording not found, currentPlaying - ", currentPlaying)
+			return ""
+		}
+		return recording.RecordingURL
 	} else {
 		return currentStation.StreamURL
 	}
@@ -25,7 +33,7 @@ func currentPlayingIsRecording(currentPlaying string) bool {
 	if currentPlaying == "" {
 		return false
 	}
-	return false
+	return models2.IdIsRecording(currentPlaying)
 }
 
 // gets the current station and the song from currentPlaying
@@ -51,8 +59,16 @@ func GetStation(currentPlaying string) (*models.Station, error) {
 	}
 
 	if currentPlayingIsRecording(currentPlaying) {
-		// TODO: Implement this
-		return nil, nil
+		// if currentPlaying is recording, get recording and then its corresponding station
+		recording, err := recordingsrepository.Shared().FindRecordingById(currentPlaying)
+		if err != nil {
+			return nil, err
+		}
+		stationId := recording.StationId
+		if stationId == "" {
+			return nil, errors.New("Recording has invalid stationId")
+		}
+		return stationsrepository.Shared().FindStationById(stationId)
 	} else {
 		return stationsrepository.Shared().FindStationById(currentPlaying)
 	}
