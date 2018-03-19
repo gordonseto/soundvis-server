@@ -12,6 +12,7 @@ import (
 	"github.com/gordonseto/soundvis-server/recordings/models"
 	"log"
 	"time"
+	"github.com/gordonseto/soundvis-server/recordings/repositories"
 )
 
 type JobManager struct {
@@ -124,6 +125,10 @@ func (c *Context) runRecordingJob(job *work.Job) error {
 	if err != nil {
 		log.Println("Error for recording job, recordingId: ", id)
 		log.Println(err)
+		err = recordingsrepository.Shared().UpdateRecordingStatus(id, models.StatusFailed)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 	return err
 }

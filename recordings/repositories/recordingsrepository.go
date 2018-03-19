@@ -38,3 +38,7 @@ func (rr *RecordingsRepository) FindRecordingsByCreatorId(creatorId string) ([]*
 	err := rr.GetRecordingsRepository().Find(bson.M{"creatorId": creatorId}).All(&recordings)
 	return recordings, err
 }
+
+func (rr *RecordingsRepository) UpdateRecordingStatus(recordingId string, status string) error {
+	return rr.GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"status": status}})
+}

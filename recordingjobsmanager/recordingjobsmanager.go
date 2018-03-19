@@ -13,6 +13,7 @@ import (
 	"github.com/gordonseto/soundvis-server/recordingsstream"
 	"github.com/gordonseto/soundvis-server/recordings/repositories"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/gordonseto/soundvis-server/recordings/models"
 )
 
 type RecordingJobsManager struct {
@@ -61,6 +62,12 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 
 	log.Println("Duration: ", endDate - time.Now().Unix())
 
+	// update recording status to IN_PROGRESS
+	err = recordingsrepository.Shared().UpdateRecordingStatus(recordingId, models.StatusInProgress)
+	if err != nil {
+		log.Println(err)
+	}
+
 	// begin streaming from station
 	resp, err := http.Get(streamURL)
 	if err != nil {
@@ -91,10 +98,9 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 		return err
 	}
 
-	// update recording with recordingURL
+	// update recording with recordingURL and status
 	recordingURL := recordingsstream.GetRecordingStreamPath(recordingId)
-	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL}})
-
+	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL, "status": models.StatusFinished}})
 	if err != nil {
 		return err
 	}

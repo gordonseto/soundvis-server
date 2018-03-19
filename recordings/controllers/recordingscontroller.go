@@ -106,6 +106,7 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 		EndDate: request.EndDate,
 		CreatedAt: time.Now().Unix(),
 		UpdatedAt: time.Now().Unix(),
+		Status: models.StatusPending,
 	}
 
 	// add recording job

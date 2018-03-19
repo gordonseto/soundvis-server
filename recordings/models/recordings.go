@@ -15,11 +15,17 @@ type Recording struct {
 	EndDate int64	`json:"endDate" bson:"endDate"`
 	RecordingURL string 	`json:"recordingUrl" bson:"recordingUrl"`
 	Progress int64	`json:"progress" bson:"recording"`
+	Status string	`json:"status" bson:"status"`
 	CreatedAt int64	`json:"createdAt" bson:"createdAt"`
 	UpdatedAt int64	`json:"updatedAt" bson:"updatedAt"`
 }
 
 var RECORDING_ID_SUFFIX = "RSV"
+
+var StatusFinished = "FINISHED"
+var StatusPending = "PENDING"
+var StatusInProgress = "IN_PROGRESS"
+var StatusFailed = "FAILED"
 
 // creates a recordingId
 func CreateRecordingId() string {
