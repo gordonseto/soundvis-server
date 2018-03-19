@@ -14,6 +14,8 @@ import (
 	"github.com/gordonseto/soundvis-server/recordings/repositories"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/gordonseto/soundvis-server/recordings/models"
+	"github.com/gordonseto/soundvis-server/stationsfetcher"
+	"github.com/gordonseto/soundvis-server/stream/models"
 )
 
 type RecordingJobsManager struct {
@@ -75,24 +77,27 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	}
 	reader := bufio.NewReader(resp.Body)
 
-	go func(){
+	// create channels for the 2 async tasks
+	streamChannel := make(chan []byte, 1)
+	tracklistChannel := make(chan *recordings.RecordingTrackList, 1)
 
+	// spin a thread to stream the audio bytes
+	go func() {
+		stream, e := rjm.recordAudio(reader, endDate)
+		err = e
+		streamChannel <- stream
 	}()
 
-	stream := make([]byte, 0)
-	// keep streaming until endDate has passed
-	for time.Now().Unix() < endDate {
-		// read the audio byte
-		b, err := reader.ReadByte()
-		if err != nil {
-			return err
-		} else {
-			if time.Now().Unix() > endDate {
-				break
-			}
-			// append to array
-			stream = append(stream, b)
-		}
+	// spin a thread to record the tracklist
+	go func() {
+		tracklist := rjm.recordTracklist(streamURL, endDate)
+		tracklistChannel <- tracklist
+	}()
+
+	stream := <-streamChannel
+	tracklist := <-tracklistChannel
+	if err != nil {
+		return err
 	}
 
 	log.Println("Done recording for recordingId: ", recordingId)
@@ -109,6 +114,58 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 		return err
 	}
 
+	for _, track := range tracklist.Tracklist {
+		log.Println(track.Song)
+		log.Println(track.Time)
+		log.Println("At time: ", track.Time - startDate)
+	}
+
 	log.Println("Finished processing recordingId: ", recordingId)
 	return nil
+}
+
+// records the audio from reader from now until endDate
+func (rjm *RecordingJobsManager) recordAudio(reader *bufio.Reader, endDate int64) ([]byte, error) {
+	// stream the audio bytes
+	stream := make([]byte, 0)
+	// keep streaming until endDate has passed
+	for time.Now().Unix() < endDate {
+		// read the audio byte
+		b, err := reader.ReadByte()
+		if err != nil {
+			return nil, err
+		} else {
+			if time.Now().Unix() > endDate {
+				break
+			}
+			// append to array
+			stream = append(stream, b)
+		}
+	}
+	return stream, nil
+}
+
+// records the tracklist of a streamURL from now until endDate
+func (rjm *RecordingJobsManager) recordTracklist(streamURL string, endDate int64) *recordings.RecordingTrackList {
+	tracklist := recordings.NewRecordingTrackList()
+	SLEEP_DURATION := 3 * time.Second
+	var lastSong *stream.Song
+
+	// loop duration of recording
+	for time.Now().Unix() < endDate {
+		// get the current song
+		song, err := stationsfetcher.GetCurrentSongPlayingShoutcast(streamURL)
+		if err != nil {
+			log.Println(err)
+		}
+		// compare if same as lastSong
+		if lastSong == nil || (song.Title != lastSong.Title && song.Name != lastSong.Name) {
+			// if song has changed, add to tracklist
+			tracklist.AddTimeStamp(recordings.NewRecordingSongTimestamp(time.Now().Unix(), song))
+		}
+		lastSong = song
+		// sleep
+		time.Sleep(SLEEP_DURATION)
+	}
+	return tracklist
 }

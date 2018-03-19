@@ -117,6 +117,10 @@ func (c *Context) runRecordingJob(job *work.Job) error {
 
 	if endDate < time.Now().Unix() {
 		log.Println("Recording end date has already passed, finishing - recordingId: " + id)
+		err := recordingsrepository.Shared().UpdateRecordingStatus(id, recordings.StatusFailed)
+		if err != nil {
+			log.Println(err)
+		}
 		return nil
 	}
 
