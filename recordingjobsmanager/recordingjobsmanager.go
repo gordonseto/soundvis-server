@@ -42,6 +42,10 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	}
 	streamURL := station.StreamURL
 
+	// if folder does not exist, create
+	if _, err := os.Stat(recordingsstream.GetFilePath()); os.IsNotExist(err) {
+		os.MkdirAll(recordingsstream.GetFilePath(), os.ModePerm)
+	}
 	// create the file
 	fileName := recordingsstream.GetRecordingFileNameFromId(recordingId)
 	file, err := os.Create(fileName)

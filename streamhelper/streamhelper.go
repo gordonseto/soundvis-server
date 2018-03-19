@@ -64,6 +64,9 @@ func GetStation(currentPlaying string) (*models.Station, error) {
 		if err != nil {
 			return nil, err
 		}
+		if recording.RecordingURL == "" {
+			return nil, errors.New("Recording has not finished")
+		}
 		stationId := recording.StationId
 		if stationId == "" {
 			return nil, errors.New("Recording has invalid stationId")
