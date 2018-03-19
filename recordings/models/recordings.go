@@ -16,6 +16,7 @@ type Recording struct {
 	RecordingURL string 	`json:"recordingUrl" bson:"recordingUrl"`
 	Progress int64	`json:"progress" bson:"recording"`
 	Status string	`json:"status" bson:"status"`
+	JobId	string	`json:"jobId" bson:"jobId"`
 	CreatedAt int64	`json:"createdAt" bson:"createdAt"`
 	UpdatedAt int64	`json:"updatedAt" bson:"updatedAt"`
 }

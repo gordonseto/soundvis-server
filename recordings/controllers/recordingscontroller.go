@@ -10,12 +10,13 @@ import (
 	"github.com/gordonseto/soundvis-server/recordings/IO"
 	"github.com/gordonseto/soundvis-server/recordings/models"
 	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
+	"github.com/gordonseto/soundvis-server/recordingsstream"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"sync"
 	"time"
-	"github.com/gordonseto/soundvis-server/recordingsstream"
+	"github.com/gordonseto/soundvis-server/stations/models"
 )
 
 type (
@@ -28,6 +29,10 @@ func (rc *RecordingsController) GETPath() string {
 }
 
 func (rc *RecordingsController) POSTPath() string {
+	return "/recordings"
+}
+
+func (rc *RecordingsController) PUTPath() string {
 	return "/recordings"
 }
 
@@ -116,15 +121,110 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 	}
 
 	// add recording job
-	err = jobmanager.Shared().AddRecordingJob(recording)
+	jobId, err := jobmanager.Shared().AddRecordingJob(recording)
 	if err != nil {
 		panic(err)
 	}
+	recording.JobId = jobId
 
 	// insert into repository
 	err = recordingsrepository.Shared().GetRecordingsRepository().Insert(recording)
 	if err != nil {
 		panic(err)
+	}
+
+	// send response
+	response := recordingsIO.CreateRecordingResponse{}
+	response.Recording = recording
+	response.Recording.Station = station
+	basecontroller.SendResponse(w, response)
+}
+
+func (rc *RecordingsController) UpdateRecording(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	user, err := authentication.CheckAuthentication(r)
+	if err != nil {
+		panic(err)
+	}
+
+	request := recordingsIO.UpdateRecordingRequest{}
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		panic(err)
+	}
+
+	// make sure request has recordingId
+	if request.RecordingId == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "RecordingId is required")
+		return
+	}
+	recordingId := request.RecordingId
+
+	// get recording
+	recording, err := recordingsrepository.Shared().FindRecordingById(recordingId)
+	if err != nil {
+		panic(err)
+	}
+
+	// check user has permission
+	if recording.CreatorId != user.Id.Hex() {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, "Permission denied")
+		return
+	}
+
+	// update the recording title to match request
+	recording.Title = request.Title
+	recording.UpdatedAt = time.Now().Unix()
+
+	var station *models.Station
+
+	// if updating stationId, startDate and endDate, create new job and invalidate old one
+	if request.StationId != "" || request.StartDate != 0 || request.EndDate != 0 {
+		now := time.Now().Unix()
+		// make sure recording has not already started
+		if recording.StartDate < now || recording.EndDate < now || recording.Status != recordings.StatusPending {
+			panic(errors.New("Cannot update recording that has already started"))
+		}
+
+		// make sure request has valid start and end dates
+		if request.StartDate > request.EndDate || request.StartDate < time.Now().Unix() || request.EndDate < time.Now().Unix() {
+			panic(errors.New("StartDate and EndDate must be in the future and EndDate must be after StartDate"))
+		}
+
+		if request.StationId == "" {
+			panic(errors.New("StationId is required if updating startDate and endDate"))
+		}
+		// get station to make sure valid
+		station, err = streamhelper.GetStation(request.StationId)
+		if err != nil {
+			panic(err)
+		}
+
+		// update the recording with new fields
+		recording.StartDate = request.StartDate
+		recording.EndDate = request.EndDate
+		recording.StationId = request.StationId
+		// add new recording job
+		jobId, err := jobmanager.Shared().AddRecordingJob(recording)
+		if err != nil {
+			panic(err)
+		}
+		recording.JobId = jobId
+	}
+
+	// update recording in repository
+	err = recordingsrepository.Shared().UpdateRecording(recording)
+	if err != nil {
+		panic(err)
+	}
+
+	// need to fill response with station, can be not present if request only updated the title
+	if station == nil {
+		station, err = streamhelper.GetStation(recording.StationId)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// send response
@@ -177,7 +277,7 @@ func (rc *RecordingsController) DeleteRecording(w http.ResponseWriter, r *http.R
 	}
 
 	// delete recording from the repository
-	err  = recordingsrepository.Shared().GetRecordingsRepository().RemoveId(recordingId)
+	err = recordingsrepository.Shared().GetRecordingsRepository().RemoveId(recordingId)
 	if err != nil {
 		panic(err)
 	}

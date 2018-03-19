@@ -19,6 +19,14 @@ type CreateRecordingResponse struct {
 	Recording *recordings.Recording 	`json:"recording"`
 }
 
+type UpdateRecordingRequest struct {
+	RecordingId string	`json:"recordingId"`
+	StationId string	`json:"stationId"`
+	Title string 	`json:"title"`
+	StartDate int64	`json:"startDate"`
+	EndDate int64 	`json:"endDate"`
+}
+
 type DeleteRecordingRequest struct {
 	RecordingId string `json:"recordingId"`
 }

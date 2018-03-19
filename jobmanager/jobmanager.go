@@ -13,6 +13,7 @@ import (
 	"time"
 	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
 	"github.com/gordonseto/soundvis-server/recordings/models"
+	"errors"
 )
 
 type JobManager struct {
@@ -92,7 +93,7 @@ func (jm *JobManager) RegisterRecordingJobs() {
 }
 
 // adds a new recordingjob to be executed at recording.StartDate
-func (jm *JobManager) AddRecordingJob(recording *recordings.Recording) error {
+func (jm *JobManager) AddRecordingJob(recording *recordings.Recording) (string, error) {
 	log.Println("Adding recordingJob - recordingId: " + recording.Id + ", set to run at ", recording.StartDate)
 
 	now := time.Now().Unix()
@@ -102,8 +103,11 @@ func (jm *JobManager) AddRecordingJob(recording *recordings.Recording) error {
 	}
 
 	// enqueue the job
-	_, err := enqueuer.EnqueueIn(recordingjobsmanager.RecordingJobName(), secondsFromNow, work.Q{"id": recording.Id, "stationId": recording.StationId, "startDate": recording.StartDate, "endDate": recording.EndDate})
-	return err
+	job, err := enqueuer.EnqueueIn(recordingjobsmanager.RecordingJobName(), secondsFromNow, work.Q{"id": recording.Id, "stationId": recording.StationId, "startDate": recording.StartDate, "endDate": recording.EndDate})
+	if err != nil {
+		return "", err
+	}
+	return job.ID, err
 }
 
 // runs the recording job
@@ -124,14 +128,26 @@ func (c *Context) runRecordingJob(job *work.Job) error {
 		return nil
 	}
 
+	// make sure jobId still matches the recording's jobId, if not, this job is invalid and should exit
+	// this can occur if a recording is updated and a new job is created for it
+	recording, err := recordingsrepository.Shared().FindRecordingById(id)
+	if err != nil {
+		return err
+	}
+	if recording.JobId != job.ID {
+		log.Println("Recording's jobId no longer matches current jobId, recordingId: " + id + ", jobId: " + job.ID + ", exiting")
+		return errors.New("Recording's jobId no longer matches current jobId, recordingId: " + id + ", jobId: " + job.ID)
+	}
+
 	// record the stream
-	err := recordingjobsmanager.Shared().RecordStream(id, stationId, startDate, endDate)
+	err = recordingjobsmanager.Shared().RecordStream(id, stationId, startDate, endDate)
 	if err != nil {
 		log.Println("Error for recording job, recordingId: ", id)
 		log.Println(err)
 		err = recordingsrepository.Shared().UpdateRecordingStatus(id, recordings.StatusFailed)
 		if err != nil {
 			log.Println(err)
+			return err
 		}
 	}
 	return err

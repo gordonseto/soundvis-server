@@ -32,6 +32,7 @@ func main() {
 	r.POST(streamsController.POSTPath(), streamsController.SetCurrentStream)
 	r.GET(recordingsController.GETPath(), recordingsController.GetRecordings)
 	r.POST(recordingsController.POSTPath(), recordingsController.CreateRecording)
+	r.PUT(recordingsController.PUTPath(), recordingsController.UpdateRecording)
 	r.DELETE(recordingsController.DELETEPath(), recordingsController.DeleteRecording)
 	r.GET(recordingsStreamController.GETPath(), recordingsStreamController.StreamRecording)
 
