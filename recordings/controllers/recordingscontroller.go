@@ -1,19 +1,21 @@
 package recordingscontroller
 
 import (
-	"github.com/julienschmidt/httprouter"
-	"net/http"
-	"github.com/gordonseto/soundvis-server/authentication"
-	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
-	"github.com/gordonseto/soundvis-server/recordings/IO"
-	"github.com/gordonseto/soundvis-server/general"
 	"encoding/json"
 	"errors"
-	"github.com/gordonseto/soundvis-server/streamhelper"
-	"time"
+	"fmt"
+	"github.com/gordonseto/soundvis-server/authentication"
+	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/jobmanager"
-	"sync"
+	"github.com/gordonseto/soundvis-server/recordings/IO"
 	"github.com/gordonseto/soundvis-server/recordings/models"
+	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
+	"github.com/gordonseto/soundvis-server/streamhelper"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
+	"sync"
+	"time"
+	"github.com/gordonseto/soundvis-server/recordingsstream"
 )
 
 type (
@@ -26,6 +28,10 @@ func (rc *RecordingsController) GETPath() string {
 }
 
 func (rc *RecordingsController) POSTPath() string {
+	return "/recordings"
+}
+
+func (rc *RecordingsController) DELETEPath() string {
 	return "/recordings"
 }
 
@@ -49,7 +55,7 @@ func (rc *RecordingsController) GetRecordings(w http.ResponseWriter, r *http.Req
 	// for each recording, get the station corresponding to their stationId
 	for _, recording := range recordings {
 		waitGroup.Add(1)
-		go func(){
+		go func() {
 			recording.Station, err = streamhelper.GetStation(recording.StationId)
 			if err != nil {
 				panic(err)
@@ -98,15 +104,15 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 		request.Title = station.Name
 	}
 	recording := &recordings.Recording{
-		Id: recordings.CreateRecordingId(),
-		Title: request.Title,
+		Id:        recordings.CreateRecordingId(),
+		Title:     request.Title,
 		CreatorId: user.Id.Hex(),
 		StationId: request.StationId,
 		StartDate: request.StartDate,
-		EndDate: request.EndDate,
+		EndDate:   request.EndDate,
 		CreatedAt: time.Now().Unix(),
 		UpdatedAt: time.Now().Unix(),
-		Status: recordings.StatusPending,
+		Status:    recordings.StatusPending,
 	}
 
 	// add recording job
@@ -125,5 +131,59 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 	response := recordingsIO.CreateRecordingResponse{}
 	response.Recording = recording
 	response.Recording.Station = station
+	basecontroller.SendResponse(w, response)
+}
+
+func (rc *RecordingsController) DeleteRecording(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	user, err := authentication.CheckAuthentication(r)
+	if err != nil {
+		panic(err)
+	}
+
+	request := recordingsIO.DeleteRecordingRequest{}
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		panic(err)
+	}
+
+	// make sure request has recordingId
+	if request.RecordingId == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "RecordingId is required")
+		return
+	}
+
+	recordingId := request.RecordingId
+
+	// get recording
+	recording, err := recordingsrepository.Shared().FindRecordingById(recordingId)
+	if err != nil {
+		panic(err)
+	}
+
+	// check user has permission
+	if recording.CreatorId != user.Id.Hex() {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, "Permission denied")
+		return
+	}
+
+	// if recording file has already been created, delete
+	if recording.Status == recordings.StatusFinished && recording.RecordingURL != "" {
+		err = recordingsstream.DeleteRecording(recordingId)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// delete recording from the repository
+	err  = recordingsrepository.Shared().GetRecordingsRepository().RemoveId(recordingId)
+	if err != nil {
+		panic(err)
+	}
+
+	response := recordingsIO.DeleteRecordingResponse{}
+	response.Ok = true
+
 	basecontroller.SendResponse(w, response)
 }

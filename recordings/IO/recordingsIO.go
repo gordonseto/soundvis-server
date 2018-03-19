@@ -18,3 +18,11 @@ type CreateRecordingRequest struct {
 type CreateRecordingResponse struct {
 	Recording *recordings.Recording 	`json:"recording"`
 }
+
+type DeleteRecordingRequest struct {
+	RecordingId string `json:"recordingId"`
+}
+
+type DeleteRecordingResponse struct {
+	Ok bool	`json:"ok"`
+}

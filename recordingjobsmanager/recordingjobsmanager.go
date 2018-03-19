@@ -69,6 +69,8 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	err = recordingsrepository.Shared().UpdateRecordingStatus(recordingId, recordings.StatusInProgress)
 	if err != nil {
 		log.Println(err)
+		err = recordingsstream.DeleteRecording(recordingId)
+		return err
 	}
 
 	// begin streaming from station
@@ -112,6 +114,8 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	recordingURL := recordingsstream.GetRecordingStreamPath(recordingId)
 	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL, "status": recordings.StatusFinished}})
 	if err != nil {
+		log.Println(err)
+		err = recordingsstream.DeleteRecording(recordingId)
 		return err
 	}
 

@@ -5,6 +5,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"bytes"
+	"os"
 )
 
 type RecordingsStreamController struct {
@@ -47,6 +48,11 @@ func GetFilePath() string {
 
 func GetRecordingFileNameFromId(recordingId string) string {
 	return GetFilePath() + recordingId + ".mp3"
+}
+
+func DeleteRecording(recordingId string) error {
+	filePath := GetRecordingFileNameFromId(recordingId)
+	return os.Remove(filePath)
 }
 
 func GetRecordingStreamPath(recordingId string) string {
