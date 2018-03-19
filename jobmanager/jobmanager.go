@@ -9,10 +9,10 @@ import (
 	"github.com/gordonseto/soundvis-server/config"
 	"sync"
 	"github.com/gordonseto/soundvis-server/recordingjobsmanager"
-	"github.com/gordonseto/soundvis-server/recordings/models"
 	"log"
 	"time"
 	"github.com/gordonseto/soundvis-server/recordings/repositories"
+	"github.com/gordonseto/soundvis-server/recordings/models"
 )
 
 type JobManager struct {
@@ -92,7 +92,7 @@ func (jm *JobManager) RegisterRecordingJobs() {
 }
 
 // adds a new recordingjob to be executed at recording.StartDate
-func (jm *JobManager) AddRecordingJob(recording *models.Recording) error {
+func (jm *JobManager) AddRecordingJob(recording *recordings.Recording) error {
 	log.Println("Adding recordingJob - recordingId: " + recording.Id + ", set to run at ", recording.StartDate)
 
 	now := time.Now().Unix()
@@ -125,7 +125,7 @@ func (c *Context) runRecordingJob(job *work.Job) error {
 	if err != nil {
 		log.Println("Error for recording job, recordingId: ", id)
 		log.Println(err)
-		err = recordingsrepository.Shared().UpdateRecordingStatus(id, models.StatusFailed)
+		err = recordingsrepository.Shared().UpdateRecordingStatus(id, recordings.StatusFailed)
 		if err != nil {
 			log.Println(err)
 		}

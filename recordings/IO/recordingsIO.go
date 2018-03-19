@@ -5,7 +5,7 @@ import (
 )
 
 type GetRecordingsResponse struct {
-	Recordings []*models.Recording `json:"recordings"`
+	Recordings []*recordings.Recording `json:"recordings"`
 }
 
 type CreateRecordingRequest struct {
@@ -16,5 +16,5 @@ type CreateRecordingRequest struct {
 }
 
 type CreateRecordingResponse struct {
-	Recording *models.Recording 	`json:"recording"`
+	Recording *recordings.Recording 	`json:"recording"`
 }

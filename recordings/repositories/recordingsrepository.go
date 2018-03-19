@@ -5,8 +5,8 @@ import (
 	"github.com/gordonseto/soundvis-server/config"
 	"sync"
 	"github.com/gordonseto/soundvis-server/dbsession"
-	"github.com/gordonseto/soundvis-server/recordings/models"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/gordonseto/soundvis-server/recordings/models"
 )
 
 type RecordingsRepository struct {
@@ -27,14 +27,14 @@ func (rr *RecordingsRepository) GetRecordingsRepository() *mgo.Collection {
 	return rr.session.DB(config.DB_NAME).C("recordings")
 }
 
-func (rr *RecordingsRepository) FindRecordingById(recordingId string) (*models.Recording, error) {
-	var recording *models.Recording
+func (rr *RecordingsRepository) FindRecordingById(recordingId string) (*recordings.Recording, error) {
+	var recording *recordings.Recording
 	err := rr.GetRecordingsRepository().Find(bson.M{"_id": recordingId}).One(&recording)
 	return recording, err
 }
 
-func (rr *RecordingsRepository) FindRecordingsByCreatorId(creatorId string) ([]*models.Recording, error) {
-	recordings := make([]*models.Recording, 0)
+func (rr *RecordingsRepository) FindRecordingsByCreatorId(creatorId string) ([]*recordings.Recording, error) {
+	recordings := make([]*recordings.Recording, 0)
 	err := rr.GetRecordingsRepository().Find(bson.M{"creatorId": creatorId}).All(&recordings)
 	return recordings, err
 }

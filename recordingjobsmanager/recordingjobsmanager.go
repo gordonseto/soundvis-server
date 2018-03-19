@@ -63,7 +63,7 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	log.Println("Duration: ", endDate - time.Now().Unix())
 
 	// update recording status to IN_PROGRESS
-	err = recordingsrepository.Shared().UpdateRecordingStatus(recordingId, models.StatusInProgress)
+	err = recordingsrepository.Shared().UpdateRecordingStatus(recordingId, recordings.StatusInProgress)
 	if err != nil {
 		log.Println(err)
 	}
@@ -74,6 +74,10 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 		return err
 	}
 	reader := bufio.NewReader(resp.Body)
+
+	go func(){
+
+	}()
 
 	stream := make([]byte, 0)
 	// keep streaming until endDate has passed
@@ -100,7 +104,7 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 
 	// update recording with recordingURL and status
 	recordingURL := recordingsstream.GetRecordingStreamPath(recordingId)
-	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL, "status": models.StatusFinished}})
+	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL, "status": recordings.StatusFinished}})
 	if err != nil {
 		return err
 	}

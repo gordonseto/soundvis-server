@@ -1,4 +1,4 @@
-package recordings
+package recordingscontroller
 
 import (
 	"github.com/julienschmidt/httprouter"
@@ -10,10 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gordonseto/soundvis-server/streamhelper"
-	"github.com/gordonseto/soundvis-server/recordings/models"
 	"time"
 	"github.com/gordonseto/soundvis-server/jobmanager"
 	"sync"
+	"github.com/gordonseto/soundvis-server/recordings/models"
 )
 
 type (
@@ -97,8 +97,8 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 	if request.Title == "" {
 		request.Title = station.Name
 	}
-	recording := &models.Recording{
-		Id: models.CreateRecordingId(),
+	recording := &recordings.Recording{
+		Id: recordings.CreateRecordingId(),
 		Title: request.Title,
 		CreatorId: user.Id.Hex(),
 		StationId: request.StationId,
@@ -106,7 +106,7 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 		EndDate: request.EndDate,
 		CreatedAt: time.Now().Unix(),
 		UpdatedAt: time.Now().Unix(),
-		Status: models.StatusPending,
+		Status: recordings.StatusPending,
 	}
 
 	// add recording job

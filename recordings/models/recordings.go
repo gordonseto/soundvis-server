@@ -1,4 +1,4 @@
-package models
+package recordings
 
 import (
 	"github.com/gordonseto/soundvis-server/stations/models"
