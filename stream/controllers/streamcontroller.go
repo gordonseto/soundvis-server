@@ -85,12 +85,6 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	// set the user's streamUpdatedAt
 	user.StreamUpdatedAt = time.Now().Unix()
 
-	// update user in db
-	err = usersrepository.Shared().UpdateUser(user)
-	if err != nil {
-		panic(err)
-	}
-
 	// create response
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
@@ -98,6 +92,12 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response.CurrentStation = station
 	response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
 	response.CurrentSong, err = streamhelper.GetCurrentSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt, station)
+	if err != nil {
+		panic(err)
+	}
+
+	// update user in db
+	err = usersrepository.Shared().UpdateUser(user)
 	if err != nil {
 		panic(err)
 	}
