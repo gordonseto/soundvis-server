@@ -11,7 +11,7 @@ import (
 	"github.com/gordonseto/soundvis-server/recordingjobsmanager"
 	"log"
 	"time"
-	"github.com/gordonseto/soundvis-server/recordings/repositories"
+	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
 	"github.com/gordonseto/soundvis-server/recordings/models"
 )
 

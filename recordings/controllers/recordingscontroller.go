@@ -4,7 +4,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"github.com/gordonseto/soundvis-server/authentication"
-	"github.com/gordonseto/soundvis-server/recordings/repositories"
+	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
 	"github.com/gordonseto/soundvis-server/recordings/IO"
 	"github.com/gordonseto/soundvis-server/general"
 	"encoding/json"

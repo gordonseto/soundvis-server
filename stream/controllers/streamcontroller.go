@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/socketmanager"
+	"time"
 )
 
 type (
@@ -41,7 +42,7 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response.IsPlaying = user.IsPlaying
 	response.CurrentPlaying = user.CurrentPlaying
 
-	response.CurrentStation, response.CurrentSong, err =  streamhelper.GetCurrentStationAndSongPlaying(user.CurrentPlaying)
+	response.CurrentStation, response.CurrentSong, err =  streamhelper.GetCurrentStationAndSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt)
 	if err != nil {
 		panic(err)
 	}
@@ -81,6 +82,9 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	user.IsPlaying = request.IsPlaying
 	user.CurrentPlaying = request.CurrentStream
 
+	// set the user's streamUpdatedAt
+	user.StreamUpdatedAt = time.Now().Unix()
+
 	// update user in db
 	err = usersrepository.Shared().UpdateUser(user)
 	if err != nil {
@@ -93,7 +97,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response.CurrentPlaying = user.CurrentPlaying
 	response.CurrentStation = station
 	response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
-	response.CurrentSong, err = streamhelper.GetCurrentSongPlaying(user.CurrentPlaying, station)
+	response.CurrentSong, err = streamhelper.GetCurrentSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt, station)
 	if err != nil {
 		panic(err)
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/gordonseto/soundvis-server/users/repositories"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/socketmanager"
+	"time"
 )
 
 type StreamJobManager struct {
@@ -50,7 +51,7 @@ func (sjm *StreamJobManager) RefreshNowPlaying() {
 // and notification to user
 func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 	// get the current station and song playing for user
-	station, song, err := streamhelper.GetCurrentStationAndSongPlaying(user.CurrentPlaying)
+	station, song, err := streamhelper.GetCurrentStationAndSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt)
 	if err != nil {
 		log.Println(err)
 		return

@@ -11,11 +11,12 @@ import (
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"errors"
 	"github.com/gordonseto/soundvis-server/recordingsstream"
-	"github.com/gordonseto/soundvis-server/recordings/repositories"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/gordonseto/soundvis-server/recordings/models"
 	"github.com/gordonseto/soundvis-server/stationsfetcher"
 	"github.com/gordonseto/soundvis-server/stream/models"
+	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
+	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingtracklistsrepository"
 )
 
 type RecordingJobsManager struct {
@@ -90,7 +91,7 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 
 	// spin a thread to record the tracklist
 	go func() {
-		tracklist := rjm.recordTracklist(streamURL, endDate)
+		tracklist := rjm.recordTracklist(recordingId, streamURL, startDate, endDate)
 		tracklistChannel <- tracklist
 	}()
 
@@ -114,10 +115,10 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 		return err
 	}
 
-	for _, track := range tracklist.Tracklist {
-		log.Println(track.Song)
-		log.Println(track.Time)
-		log.Println("At time: ", track.Time - startDate)
+	// insert recording tracklist into DB
+	err = recordingtracklistsrepository.Shared().GetRecordingTracklistsRepository().Insert(tracklist)
+	if err != nil {
+		return err
 	}
 
 	log.Println("Finished processing recordingId: ", recordingId)
@@ -126,7 +127,6 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 
 // records the audio from reader from now until endDate
 func (rjm *RecordingJobsManager) recordAudio(reader *bufio.Reader, endDate int64) ([]byte, error) {
-	// stream the audio bytes
 	stream := make([]byte, 0)
 	// keep streaming until endDate has passed
 	for time.Now().Unix() < endDate {
@@ -146,8 +146,8 @@ func (rjm *RecordingJobsManager) recordAudio(reader *bufio.Reader, endDate int64
 }
 
 // records the tracklist of a streamURL from now until endDate
-func (rjm *RecordingJobsManager) recordTracklist(streamURL string, endDate int64) *recordings.RecordingTrackList {
-	tracklist := recordings.NewRecordingTrackList()
+func (rjm *RecordingJobsManager) recordTracklist(recordingId string, streamURL string, startDate int64, endDate int64) *recordings.RecordingTrackList {
+	tracklist := recordings.NewRecordingTrackList(recordingId)
 	SLEEP_DURATION := 3 * time.Second
 	var lastSong *stream.Song
 
@@ -161,7 +161,8 @@ func (rjm *RecordingJobsManager) recordTracklist(streamURL string, endDate int64
 		// compare if same as lastSong
 		if lastSong == nil || (song.Title != lastSong.Title && song.Name != lastSong.Name) {
 			// if song has changed, add to tracklist
-			tracklist.AddTimeStamp(recordings.NewRecordingSongTimestamp(time.Now().Unix(), song))
+			progress := time.Now().Unix() - startDate
+			tracklist.AddTimeStamp(progress, song)
 		}
 		lastSong = song
 		// sleep

@@ -10,5 +10,6 @@ type (
 		CurrentPlaying string	`bson:"currentPlaying"`	// this is a stationId or recordingId
 		Recordings []string	`bson:"recordings"`
 		CreatedAt int64		`bson:"createdAt"`
+		StreamUpdatedAt int64 `bson:"streamUpdatedAt"`
 	}
 )

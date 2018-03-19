@@ -1,8 +1,11 @@
 package recordings
 
-import "github.com/gordonseto/soundvis-server/stream/models"
+import (
+	"github.com/gordonseto/soundvis-server/stream/models"
+)
 
 type RecordingTrackList struct {
+	RecordingId string 	`bson:"recordingId"`
 	Tracklist []*RecordingSongTimestamp `bson:"tracklist"`
 }
 
@@ -11,14 +14,14 @@ type RecordingSongTimestamp struct {
 	Song *stream.Song	`bson:"song"`
 }
 
-func NewRecordingTrackList() *RecordingTrackList {
-	return &RecordingTrackList{make([]*RecordingSongTimestamp, 0)}
+func NewRecordingTrackList(recordingId string) *RecordingTrackList {
+	return &RecordingTrackList{recordingId, make([]*RecordingSongTimestamp, 0)}
 }
 
 func NewRecordingSongTimestamp(time int64, song *stream.Song) *RecordingSongTimestamp {
 	return &RecordingSongTimestamp{time, song}
 }
 
-func (rtl *RecordingTrackList) AddTimeStamp(timestamp *RecordingSongTimestamp) {
-	rtl.Tracklist = append(rtl.Tracklist, timestamp)
+func (rtl *RecordingTrackList) AddTimeStamp(progress int64, song *stream.Song) {
+	rtl.Tracklist = append(rtl.Tracklist, NewRecordingSongTimestamp(progress, song))
 }

@@ -6,9 +6,10 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/models"
 	"github.com/gordonseto/soundvis-server/stations/repositories"
 	models2 "github.com/gordonseto/soundvis-server/recordings/models"
-	"github.com/gordonseto/soundvis-server/recordings/repositories"
+	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
 	"errors"
 	"log"
+	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingtracklistsrepository"
 )
 
 // gets the audio stream url from currentPlaying
@@ -38,7 +39,8 @@ func currentPlayingIsRecording(currentPlaying string) bool {
 
 // gets the current station and the song from currentPlaying
 // currentPlaying is an id for a station or recording
-func GetCurrentStationAndSongPlaying(currentPlaying string) (*models.Station, *stream.Song, error) {
+// progress is the progress in a recording, can be anything if currentPlaying is a station
+func GetCurrentStationAndSongPlaying(currentPlaying string, progress int64) (*models.Station, *stream.Song, error) {
 	if currentPlaying == "" {
 		return nil, nil, nil
 	}
@@ -47,7 +49,7 @@ func GetCurrentStationAndSongPlaying(currentPlaying string) (*models.Station, *s
 	if err != nil {
 		return nil, nil, err
 	}
-	song, err := GetCurrentSongPlaying(currentPlaying, station)
+	song, err := GetCurrentSongPlaying(currentPlaying, progress, station)
 	return station, song, err
 }
 
@@ -64,8 +66,11 @@ func GetStation(currentPlaying string) (*models.Station, error) {
 		if err != nil {
 			return nil, err
 		}
-		if recording.RecordingURL == "" {
+		if recording.Status == models2.StatusInProgress || recording.Status == models2.StatusPending {
 			return nil, errors.New("Recording has not finished")
+		}
+		if recording.Status == models2.StatusFailed {
+			return nil, errors.New("Recording is not valid")
 		}
 		stationId := recording.StationId
 		if stationId == "" {
@@ -78,15 +83,32 @@ func GetStation(currentPlaying string) (*models.Station, error) {
 }
 
 // gets the current song from currentPlaying
-// currentPlaying is an id for a station or recording
-func GetCurrentSongPlaying(currentPlaying string, station *models.Station) (*stream.Song, error) {
+// currentPlaying is an id for a station or valid recording
+// progress is the progress in a recording, can be anything if currentPlaying is a station
+func GetCurrentSongPlaying(currentPlaying string, progress int64, station *models.Station) (*stream.Song, error) {
 	if currentPlaying == "" {
 		return nil, nil
 	}
 
 	if currentPlayingIsRecording(currentPlaying) {
-		// TODO: Implement this
-		return nil, nil
+		// get the tracklist for the recording
+		tracklist, err := recordingtracklistsrepository.Shared().FindTracklistByRecordingId(currentPlaying)
+		if err != nil {
+			return nil, err
+		}
+		if len(tracklist.Tracklist) > 0 {
+			song := tracklist.Tracklist[0].Song
+			// iterate through the tracklist until progress < tracklist[i].Time
+			for _, track := range tracklist.Tracklist {
+				if track.Time <= progress {
+					song = track.Song
+				} else {
+					break
+				}
+			}
+			return song, nil
+		}
+		return nil, errors.New("Tracklist is empty")
 	} else {
 		return stationsfetcher.GetCurrentSongPlayingShoutcast(station.StreamURL)
 	}
