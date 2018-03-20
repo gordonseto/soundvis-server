@@ -46,18 +46,6 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	}
 	streamURL := station.StreamURL
 
-	// if folder does not exist, create
-	if _, err := os.Stat(recordingsstream.GetFilePath()); os.IsNotExist(err) {
-		os.MkdirAll(recordingsstream.GetFilePath(), os.ModePerm)
-	}
-	// create the file
-	fileName := recordingsstream.GetRecordingFileNameFromId(recordingId)
-	file, err := os.Create(fileName)
-	if err != nil {
-		return errors.New("Error creating file for recordingId: " + recordingId)
-	}
-	defer file.Close()
-
 	// wait if startDate has not passed
 	for time.Now().Unix() < startDate {
 		fmt.Println("Waiting for startDate, recordingId: " + recordingId)
@@ -68,17 +56,8 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	// update recording status to IN_PROGRESS
 	err = recordingsrepository.Shared().UpdateRecordingStatus(recordingId, recordings.StatusInProgress)
 	if err != nil {
-		log.Println(err)
-		err = recordingsstream.DeleteRecordingFile(recordingId)
 		return err
 	}
-
-	// begin streaming from station
-	resp, err := http.Get(streamURL)
-	if err != nil {
-		return err
-	}
-	reader := bufio.NewReader(resp.Body)
 
 	// create channels for the 2 async tasks
 	streamChannel := make(chan []byte, 1)
@@ -86,7 +65,7 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 
 	// spin a thread to stream the audio bytes
 	go func() {
-		stream, e := rjm.recordAudio(reader, endDate)
+		stream, e := rjm.recordAudio(streamURL, endDate)
 		err = e
 		streamChannel <- stream
 	}()
@@ -97,6 +76,7 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 		tracklistChannel <- tracklist
 	}()
 
+	// wait for stream and tracklist to finish recording
 	stream := <-streamChannel
 	tracklist := <-tracklistChannel
 	if err != nil {
@@ -105,9 +85,10 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 
 	log.Println("Done recording for recordingId: ", recordingId)
 
-	// save byte array
-	if _, err := file.Write(stream); err != nil {
-		return err
+	// save recording to file
+	err = rjm.saveStreamToFile(recordingId, stream)
+	if err != nil {
+		panic(err)
 	}
 
 	// update recording with recordingURL and status
@@ -115,6 +96,7 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 	err = recordingsrepository.Shared().GetRecordingsRepository().UpdateId(recordingId, bson.M{"$set": bson.M{"recordingUrl": recordingURL, "status": recordings.StatusFinished}})
 	if err != nil {
 		log.Println(err)
+		// if failure, delete the recording
 		err = recordingsstream.DeleteRecordingFile(recordingId)
 		return err
 	}
@@ -130,7 +112,14 @@ func (rjm *RecordingJobsManager) RecordStream(recordingId string, stationId stri
 }
 
 // records the audio from reader from now until endDate
-func (rjm *RecordingJobsManager) recordAudio(reader *bufio.Reader, endDate int64) ([]byte, error) {
+func (rjm *RecordingJobsManager) recordAudio(streamURL string, endDate int64) ([]byte, error) {
+	// begin streaming from station
+	resp, err := http.Get(streamURL)
+	if err != nil {
+		return nil, err
+	}
+	reader := bufio.NewReader(resp.Body)
+
 	stream := make([]byte, 0)
 	// keep streaming until endDate has passed
 	for time.Now().Unix() < endDate {
@@ -173,4 +162,24 @@ func (rjm *RecordingJobsManager) recordTracklist(recordingId string, streamURL s
 		time.Sleep(SLEEP_DURATION)
 	}
 	return tracklist
+}
+
+func (rjm *RecordingJobsManager) saveStreamToFile(recordingId string, stream []byte) error {
+	// if folder does not exist, create
+	if _, err := os.Stat(recordingsstream.GetFilePath()); os.IsNotExist(err) {
+		os.MkdirAll(recordingsstream.GetFilePath(), os.ModePerm)
+	}
+	// create the file
+	fileName := recordingsstream.GetRecordingFileNameFromId(recordingId)
+	file, err := os.Create(fileName)
+	if err != nil {
+		return errors.New("Error creating file for recordingId: " + recordingId)
+	}
+	defer file.Close()
+
+	// save byte array
+	if _, err := file.Write(stream); err != nil {
+		return err
+	}
+	return nil
 }

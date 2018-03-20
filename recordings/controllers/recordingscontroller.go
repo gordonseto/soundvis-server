@@ -17,7 +17,6 @@ import (
 	"sync"
 	"time"
 	"github.com/gordonseto/soundvis-server/stations/models"
-	"log"
 )
 
 type (
