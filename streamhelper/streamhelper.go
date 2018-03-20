@@ -18,7 +18,7 @@ func GetStreamURL(currentPlaying string, currentStation *models.Station) string 
 	if currentPlaying == "" {
 		return ""
 	}
-	if currentPlayingIsRecording(currentPlaying) {
+	if CurrentPlayingIsRecording(currentPlaying) {
 		recording, err := recordingsrepository.Shared().FindRecordingById(currentPlaying)
 		if err != nil {
 			log.Println("Recording not found, currentPlaying - ", currentPlaying)
@@ -30,7 +30,7 @@ func GetStreamURL(currentPlaying string, currentStation *models.Station) string 
 	}
 }
 
-func currentPlayingIsRecording(currentPlaying string) bool {
+func CurrentPlayingIsRecording(currentPlaying string) bool {
 	if currentPlaying == "" {
 		return false
 	}
@@ -60,7 +60,7 @@ func GetStation(currentPlaying string) (*models.Station, error) {
 		return nil, nil
 	}
 
-	if currentPlayingIsRecording(currentPlaying) {
+	if CurrentPlayingIsRecording(currentPlaying) {
 		// if currentPlaying is recording, get recording and then its corresponding station
 		recording, err := recordingsrepository.Shared().FindRecordingById(currentPlaying)
 		if err != nil {
@@ -90,7 +90,7 @@ func GetCurrentSongPlaying(currentPlaying string, progress int64, station *model
 		return nil, nil
 	}
 
-	if currentPlayingIsRecording(currentPlaying) {
+	if CurrentPlayingIsRecording(currentPlaying) {
 		// get the tracklist for the recording
 		tracklist, err := recordingtracklistsrepository.Shared().FindTracklistByRecordingId(currentPlaying)
 		if err != nil {

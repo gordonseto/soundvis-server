@@ -13,6 +13,8 @@ import (
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/socketmanager"
 	"time"
+	"github.com/gordonseto/soundvis-server/listeningsessions/repositories"
+	"log"
 )
 
 type (
@@ -78,6 +80,11 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
+	// hold onto the user's previous currentPlaying and streamUpdatedAt to save as a listening session
+	previousIsPlaying := user.IsPlaying
+	previousPlaying := user.CurrentPlaying
+	previousStreamUpdatedAt := user.StreamUpdatedAt
+
 	// set user's values to match request
 	user.IsPlaying = request.IsPlaying
 	user.CurrentPlaying = request.CurrentStream
@@ -100,6 +107,15 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	err = usersrepository.Shared().UpdateUser(user)
 	if err != nil {
 		panic(err)
+	}
+
+	// save previous listening session if needed
+	if previousIsPlaying {
+		err = listeningsessionsrepository.Shared().InsertListeningSession(user.Id.Hex(), previousPlaying, time.Now().Unix() - previousStreamUpdatedAt, previousStreamUpdatedAt)
+		if err != nil {
+			log.Println("Error saving user's listening session: ")
+			log.Println(err)
+		}
 	}
 
 	// if request was from DE1, send notification to Android device
