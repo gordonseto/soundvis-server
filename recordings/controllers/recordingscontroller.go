@@ -17,6 +17,9 @@ import (
 	"sync"
 	"time"
 	"github.com/gordonseto/soundvis-server/stations/models"
+	models2 "github.com/gordonseto/soundvis-server/users/models"
+	"github.com/gordonseto/soundvis-server/users/repositories"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type (
@@ -283,6 +286,15 @@ func (rc *RecordingsController) DeleteRecording(w http.ResponseWriter, r *http.R
 	err = recordingsrepository.Shared().GetRecordingsRepository().RemoveId(recordingId)
 	if err != nil {
 		panic(err)
+	}
+
+	// find all users currently playing recording and set their currentPlaying to empty
+	var users []models2.User
+	usersrepository.Shared().GetUsersRepository().Find(bson.M{"currentPlaying": recordingId}).All(&users)
+	for _, user := range users {
+		user.CurrentPlaying = ""
+		user.IsPlaying = false
+		usersrepository.Shared().UpdateUser(&user)
 	}
 
 	response := recordingsIO.DeleteRecordingResponse{}
