@@ -29,6 +29,10 @@ func (sm *SocketManager) POSTPath() string {
 	return "/sock"
 }
 
+func (sm *SocketManager) GETPath() string {
+	return "/sock"
+}
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true

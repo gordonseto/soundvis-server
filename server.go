@@ -37,6 +37,7 @@ func main() {
 	r.GET(recordingsStreamController.GETPath(), recordingsStreamController.StreamRecording)
 
 	r.POST(socketmanager.Shared().POSTPath(), socketmanager.Shared().Connect)
+	r.GET(socketmanager.Shared().GETPath(), socketmanager.Shared().Connect)
 	//stationsfetcher.FetchAndStoreStations(stationsrepository.Shared())
 
 	jobmanager.Shared().RegisterStreamJobs()
