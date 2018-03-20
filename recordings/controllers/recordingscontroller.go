@@ -77,7 +77,6 @@ func GetStationForRecording(recording *recordings.Recording, waitGroup *sync.Wai
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Done getting station for recording: ", recording.Id)
 	recording.Station = station
 	waitGroup.Done()
 }
