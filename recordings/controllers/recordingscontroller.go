@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 	"github.com/gordonseto/soundvis-server/stations/models"
+	"log"
 )
 
 type (
@@ -60,13 +61,7 @@ func (rc *RecordingsController) GetRecordings(w http.ResponseWriter, r *http.Req
 	// for each recording, get the station corresponding to their stationId
 	for _, recording := range recordings {
 		waitGroup.Add(1)
-		go func() {
-			recording.Station, err = streamhelper.GetStation(recording.StationId)
-			if err != nil {
-				panic(err)
-			}
-			waitGroup.Done()
-		}()
+		go GetStationForRecording(recording, &waitGroup)
 	}
 
 	// wait for all stations to be fetched for their recording
@@ -75,6 +70,16 @@ func (rc *RecordingsController) GetRecordings(w http.ResponseWriter, r *http.Req
 	response := recordingsIO.GetRecordingsResponse{}
 	response.Recordings = recordings
 	basecontroller.SendResponse(w, response)
+}
+
+func GetStationForRecording(recording *recordings.Recording, waitGroup *sync.WaitGroup) {
+	station, err := streamhelper.GetStation(recording.StationId)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Done getting station for recording: ", recording.Id)
+	recording.Station = station
+	waitGroup.Done()
 }
 
 func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -219,18 +224,18 @@ func (rc *RecordingsController) UpdateRecording(w http.ResponseWriter, r *http.R
 		panic(err)
 	}
 
-	// need to fill response with station, can be not present if request only updated the title
+	// need to fill response with station
 	if station == nil {
 		station, err = streamhelper.GetStation(recording.StationId)
 		if err != nil {
 			panic(err)
 		}
 	}
+	recording.Station = station
 
 	// send response
 	response := recordingsIO.CreateRecordingResponse{}
 	response.Recording = recording
-	response.Recording.Station = station
 	basecontroller.SendResponse(w, response)
 }
 
@@ -270,7 +275,7 @@ func (rc *RecordingsController) DeleteRecording(w http.ResponseWriter, r *http.R
 
 	// if recording file has already been created, delete
 	if recording.Status == recordings.StatusFinished && recording.RecordingURL != "" {
-		err = recordingsstream.DeleteRecording(recordingId)
+		err = recordingsstream.DeleteRecordingFile(recordingId)
 		if err != nil {
 			panic(err)
 		}

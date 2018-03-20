@@ -50,7 +50,7 @@ func GetRecordingFileNameFromId(recordingId string) string {
 	return GetFilePath() + recordingId + ".mp3"
 }
 
-func DeleteRecording(recordingId string) error {
+func DeleteRecordingFile(recordingId string) error {
 	filePath := GetRecordingFileNameFromId(recordingId)
 	return os.Remove(filePath)
 }
