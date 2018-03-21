@@ -9,6 +9,7 @@ import (
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"sort"
 	"github.com/gordonseto/soundvis-server/general"
+	"sync"
 )
 
 type ListeningSessionsController struct {
@@ -28,33 +29,45 @@ func (lsc *ListeningSessionsController) GetStats(w http.ResponseWriter, r *http.
 		panic(err)
 	}
 
+	// get user's sessions
 	sessions, err := listeningsessionsrepository.Shared().FindSessionsByUser(user.Id.Hex())
 	if err != nil {
 		panic(err)
 	}
 
+	// iterate through their sessions and aggregate total duration for each station
 	stationDurationMap := make(map[string]*listeningsessionsIO.StationDuration)
-	for _, s := range sessions {
+	for _, session := range sessions {
 		var stationDuration *listeningsessionsIO.StationDuration
-		stationDuration, ok := stationDurationMap[s.StationId]
+		// get current duration from map
+		stationDuration, ok := stationDurationMap[session.StationId]
 		if !ok {
+			// if not in map, create new entry
 			stationDuration = &listeningsessionsIO.StationDuration{
 				Duration: 0,
 			}
 		}
-		stationDuration.Duration += s.Duration
-		stationDurationMap[s.StationId] = stationDuration
+		// add current session's duration to total duration for station
+		stationDuration.Duration += session.Duration
+		stationDurationMap[session.StationId] = stationDuration
 	}
 
-	stationDurations := make([]*listeningsessionsIO.StationDuration, 0)
+	// for each stationDuration, get the full station object
+	var waitGroup sync.WaitGroup
 	for k, v := range stationDurationMap {
-		v.Station, err = streamhelper.GetStation(k)
-		if err != nil {
-			panic(err)
-		}
+		waitGroup.Add(1)
+		go getStationAsync(k, v, &waitGroup)
+	}
+	// wait for all calls to finish
+	waitGroup.Wait()
+
+	// iterate through map again and add entries into an array
+	stationDurations := make([]*listeningsessionsIO.StationDuration, 0)
+	for _, v := range stationDurationMap {
 		stationDurations = append(stationDurations, v)
 	}
 
+	// sort array by decreasing duration
 	sort.Slice(stationDurations, func(i, j int) bool {
 		return stationDurations[i].Duration > stationDurations[j].Duration
 	})
@@ -62,4 +75,14 @@ func (lsc *ListeningSessionsController) GetStats(w http.ResponseWriter, r *http.
 	response := listeningsessionsIO.GetStatsResponse{}
 	response.Rankings = stationDurations
 	basecontroller.SendResponse(w, response)
+}
+
+// gets station corresponding to stationId and sets it to stationDuration's station
+func getStationAsync(stationId string, stationDuration *listeningsessionsIO.StationDuration, waitGroup *sync.WaitGroup) {
+	station, err := streamhelper.GetStation(stationId)
+	if err != nil {
+		panic(err)
+	}
+	stationDuration.Station = station
+	waitGroup.Done()
 }
