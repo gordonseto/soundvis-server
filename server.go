@@ -14,6 +14,7 @@ import (
 	"github.com/gordonseto/soundvis-server/jobmanager"
 	"github.com/gordonseto/soundvis-server/recordingsstream"
 	"github.com/gordonseto/soundvis-server/recordings/controllers"
+	"github.com/gordonseto/soundvis-server/listeningsessions/controllers"
 )
 
 func main() {
@@ -25,6 +26,7 @@ func main() {
 	streamsController := stream.NewStreamController()
 	recordingsController := recordingscontroller.NewRecordingsController()
 	recordingsStreamController := recordingsstream.NewRecordingsStreamController()
+	listeningSessionsController := listeningsessionscontroller.NewListeningSessionsController()
 
 	r.GET(stationsController.GETPath(), stationsController.GetStations)
 	r.POST(usersController.POSTPath(), usersController.CreateUser)
@@ -35,6 +37,7 @@ func main() {
 	r.PUT(recordingsController.PUTPath(), recordingsController.UpdateRecording)
 	r.DELETE(recordingsController.DELETEPath(), recordingsController.DeleteRecording)
 	r.GET(recordingsStreamController.GETPath(), recordingsStreamController.StreamRecording)
+	r.GET(listeningSessionsController.GETPath(), listeningSessionsController.GetStats)
 
 	r.POST(socketmanager.Shared().POSTPath(), socketmanager.Shared().Connect)
 	r.GET(socketmanager.Shared().GETPath(), socketmanager.Shared().Connect)

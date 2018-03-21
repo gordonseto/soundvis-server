@@ -52,3 +52,9 @@ func (lsr *ListeningSessionsRepository) InsertListeningSession(userId string, st
 	}
 	return Shared().GetListeningSessionsRepository().Insert(listeningSession)
 }
+
+func (lsr *ListeningSessionsRepository) FindSessionsByUser(userId string) ([]listeningsession.ListeningSession, error) {
+	var ls []listeningsession.ListeningSession
+	err := Shared().GetListeningSessionsRepository().Find(bson.M{"userId": userId}).All(&ls)
+	return ls, err
+}

@@ -42,8 +42,11 @@ var upgrader = websocket.Upgrader{
 var mutex = &sync.Mutex{}
 
 func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	userId := "3"
 	fmt.Println("UserId from header: " + r.Header.Get("userId"))
+	userId := r.Header.Get("userId")
+	if userId == "" {
+		panic(errors.New("UserId is required for socket connection"))
+	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(errors.New("Error connecting socket"))
