@@ -122,9 +122,12 @@ trainset = data.build_full_trainset()
 algo.fit(trainset)
 
 # save model to file
-from surprise import dump
+import pickle
 file_name = 'recommendations/model'
-dump.dump(file_name, algo=algo)
+dump_obj = {'predictions': None,
+                'algo': algo
+                }
+pickle.dump(dump_obj, open(file_name, 'wb'), protocol=2)
 
 end_time = time.time()
 
