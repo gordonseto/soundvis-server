@@ -96,12 +96,18 @@ func (rc *RecordingsController) CreateRecording(w http.ResponseWriter, r *http.R
 		panic(err)
 	}
 
-	if request.StationId == "" || request.StartDate == 0 || request.EndDate == 0 {
-		panic(errors.New("StationId, StartDate or EndDate missing"))
+	if request.StationId == "" || request.EndDate == 0 {
+		panic(errors.New("StationId or EndDate missing"))
 	}
 
-	if request.StartDate > request.EndDate || request.StartDate < time.Now().Unix() || request.EndDate < time.Now().Unix() {
-		panic(errors.New("StartDate and EndDate must be in the future and EndDate must be after StartDate"))
+	// if start date has already passed, set as now
+	now := time.Now().Unix()
+	if request.StartDate < now {
+		request.StartDate = now
+	}
+
+	if request.StartDate > request.EndDate || request.EndDate < now {
+		panic(errors.New("EndDate must be in the future and EndDate must be after StartDate"))
 	}
 
 	// get station to make sure valid
@@ -193,8 +199,13 @@ func (rc *RecordingsController) UpdateRecording(w http.ResponseWriter, r *http.R
 			panic(errors.New("Cannot update recording that has already started"))
 		}
 
+		// if start date has already passed, set as now
+		if request.StartDate < now {
+			request.StartDate = now
+		}
+
 		// make sure request has valid start and end dates
-		if request.StartDate > request.EndDate || request.StartDate < time.Now().Unix() || request.EndDate < time.Now().Unix() {
+		if request.StartDate > request.EndDate || request.EndDate < time.Now().Unix() {
 			panic(errors.New("StartDate and EndDate must be in the future and EndDate must be after StartDate"))
 		}
 
