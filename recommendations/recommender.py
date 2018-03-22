@@ -4,6 +4,11 @@ if len(sys.argv) > 1:
 else:
     sys.exit(0)
 
+if len(sys.argv) > 2:
+    verbose = True
+else:
+    verbose = False
+
 import time
 start_time = time.time()
 
@@ -46,7 +51,17 @@ def print_station_genre_and_rating(station_id, rating):
 
 end_time = time.time()
 
-for rec in user_recs:
-    print_station_genre_and_rating(rec.iid, rec.est)
+if verbose:
+    for rec in user_recs:
+        print_station_genre_and_rating(rec.iid, rec.est)
 
-print("Elapsed time: ", end_time - start_time)
+if verbose:
+    print("Elapsed time: ", end_time - start_time)
+
+# combine user_recs into one string, comma delimited
+output = ""
+for rec in user_recs:
+    output += rec.iid + ","
+
+# output the string
+print(output[:-1])
