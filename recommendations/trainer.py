@@ -47,8 +47,8 @@ def print_station_genre_and_rating(station_id, rating):
     else:
         print("Genre not found for ", station_id)
 
+# print out all real user's ratings
 print("Users values:")
-# iterate through aggregated sessions and format into ratings_dict
 for user_id, station_durations in aggregated_sessions.items():
     print("User_id: ", user_id)
     total = station_durations['total']
@@ -125,8 +125,8 @@ algo.fit(trainset)
 import pickle
 file_name = 'recommendations/model'
 dump_obj = {'predictions': None,
-                'algo': algo
-                }
+            'algo': algo
+            }
 pickle.dump(dump_obj, open(file_name, 'wb'), protocol=2)
 
 end_time = time.time()

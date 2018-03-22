@@ -1,9 +1,12 @@
 import sys
+
+# get uid from argument
 if len(sys.argv) > 1:
     uid = sys.argv[1]
 else:
     sys.exit(0)
 
+# if a third argument, verbose = true else verbose = false
 if len(sys.argv) > 2:
     verbose = True
 else:
@@ -41,6 +44,8 @@ for document in stations_repository.find({}):
 # sort rating descending
 user_recs.sort(key=lambda x: x.est, reverse=True)
 
+end_time = time.time()
+
 from bson import ObjectId
 def print_station_genre_and_rating(station_id, rating):
     station = stations_repository.find_one({"_id": ObjectId(station_id)})
@@ -48,8 +53,6 @@ def print_station_genre_and_rating(station_id, rating):
         print(station['genre'], rating)
     else:
         print("Genre not found for ", station_id)
-
-end_time = time.time()
 
 if verbose:
     for rec in user_recs:
@@ -63,5 +66,5 @@ output = ""
 for rec in user_recs:
     output += rec.iid + ","
 
-# output the string
+# output the string, remove the last ","
 print(output[:-1])
