@@ -10,6 +10,7 @@ import (
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/general"
+	"sync"
 )
 
 type RecommendationsController struct {
@@ -39,16 +40,31 @@ func (rc *RecommendationsController) GetRecommendations(w http.ResponseWriter, r
 	recommendations := strings.Split(string(out), ",")
 
 	// get top 5 recommendations' stations
+	stationsMap := make(map[string]*models.Station)
+	var waitGroup sync.WaitGroup
+	for _, recommendation := range recommendations[:5] {
+		waitGroup.Add(1)
+		go FetchStationAndPopulateMap(recommendation, stationsMap, &waitGroup)
+	}
+	waitGroup.Wait()
+
+	// fill response with stations
 	stations := make([]*models.Station, 0)
 	for _, recommendation := range recommendations[:5] {
-		station, err := streamhelper.GetStation(recommendation)
-		if err != nil {
-			panic(err)
+		if station, ok := stationsMap[recommendation]; ok {
+			stations = append(stations, station)
 		}
-		stations = append(stations, station)
 	}
-
 	response := recommendationsIO.GetRecommendationsResponse{}
 	response.Recommendations = stations
 	basecontroller.SendResponse(w, response)
+}
+
+func FetchStationAndPopulateMap(stationId string, stations map[string]*models.Station, waitGroup *sync.WaitGroup) {
+	station, err := streamhelper.GetStation(stationId)
+	if err != nil {
+		panic(err)
+	}
+	stations[stationId] = station
+	waitGroup.Done()
 }
