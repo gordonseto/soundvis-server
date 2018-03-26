@@ -14,6 +14,7 @@ import (
 	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
 	"github.com/gordonseto/soundvis-server/recordings/models"
 	"errors"
+	"github.com/gordonseto/soundvis-server/recommenderjobsmanager"
 )
 
 type JobManager struct {
@@ -27,6 +28,7 @@ var redisPool *redis.Pool
 var pool *work.WorkerPool
 
 var STREAM_JOB_INTERVAL int64 = 5
+var RECOMMENDER_JOB_INTERVAL int64 = 5 * 60
 
 var instance *JobManager
 var once sync.Once
@@ -150,5 +152,28 @@ func (c *Context) runRecordingJob(job *work.Job) error {
 			return err
 		}
 	}
+	return err
+}
+
+// creates recommenderJobs that will run every RECOMMENDER_JOB_INTERVAL
+func (jm *JobManager) RegisterRecommenderJobs() {
+	// add handler for job
+	pool.Job(recommenderjobsmanager.RecommenderJobName(), (*Context).runRecommenderJob)
+
+	// enqueue initial stream job
+	jm.enqueueRecommenderJob()
+}
+
+func (c *Context) runRecommenderJob(job *work.Job) error {
+	// enqueue a new recommenderJob to run after this one is finished
+	Shared().enqueueRecommenderJob()
+	// run the trainer
+	recommenderjobsmanager.Shared().RunTrainer()
+	return nil
+}
+
+// enqueues a new recommenderJob to run
+func (jm *JobManager) enqueueRecommenderJob() error {
+	_, err := enqueuer.EnqueueUniqueIn(recommenderjobsmanager.RecommenderJobName(), RECOMMENDER_JOB_INTERVAL, nil)
 	return err
 }

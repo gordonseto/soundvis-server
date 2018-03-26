@@ -39,8 +39,6 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var mutex = &sync.Mutex{}
-
 func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	fmt.Println("UserId from header: " + r.Header.Get("userId"))
 	userId := r.Header.Get("userId")

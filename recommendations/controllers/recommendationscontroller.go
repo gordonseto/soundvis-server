@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"github.com/julienschmidt/httprouter"
 	"github.com/gordonseto/soundvis-server/authentication"
-	"os/exec"
 	"strings"
 	"github.com/gordonseto/soundvis-server/recommendations/IO"
 	"github.com/gordonseto/soundvis-server/streamhelper"
 	"github.com/gordonseto/soundvis-server/stations/models"
 	"github.com/gordonseto/soundvis-server/general"
 	"sync"
+	"github.com/gordonseto/soundvis-server/scripthelper"
 )
 
 type RecommendationsController struct {
@@ -31,8 +31,7 @@ func (rc *RecommendationsController) GetRecommendations(w http.ResponseWriter, r
 	}
 
 	// run python script to get sorted list of station recommendations
-	cmd := exec.Command("python",  "recommendations/recommender.py", user.Id.Hex())
-	out, err := cmd.CombinedOutput()
+	out, err := scripthelper.RunRecommenderScript(user.Id.Hex())
 	if err != nil {
 		panic(err)
 	}
