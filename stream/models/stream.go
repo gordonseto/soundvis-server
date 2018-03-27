@@ -5,6 +5,7 @@ import "strings"
 type Song struct {
 	Name string		`json:"name"`
 	Title string 	`json:"title"`
+	ImageURL string	`json:"imageUrl"`	// this will be empty unless GetAlbumArtworkForSong is called
 }
 
 // converts shoutcast now playing format to a song

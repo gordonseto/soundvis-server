@@ -1,15 +1,19 @@
 package streamhelper
 
 import (
-	"github.com/gordonseto/soundvis-server/stationsfetcher"
-	"github.com/gordonseto/soundvis-server/stations/models"
-	"github.com/gordonseto/soundvis-server/stream/models"
-	"github.com/gordonseto/soundvis-server/stations/repositories"
+	"encoding/json"
+	"errors"
+	"github.com/gordonseto/soundvis-server/general"
 	models2 "github.com/gordonseto/soundvis-server/recordings/models"
 	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingsrepository"
-	"errors"
-	"log"
 	"github.com/gordonseto/soundvis-server/recordings/repositories/recordingtracklistsrepository"
+	"github.com/gordonseto/soundvis-server/stations/models"
+	"github.com/gordonseto/soundvis-server/stations/repositories"
+	"github.com/gordonseto/soundvis-server/stream/models"
+	"log"
+	"net/http"
+	"github.com/gordonseto/soundvis-server/stationsfetcher"
+	"github.com/gordonseto/soundvis-server/config"
 )
 
 // gets the audio stream url from currentPlaying
@@ -112,4 +116,37 @@ func GetCurrentSongPlaying(currentPlaying string, progress int64, station *model
 	} else {
 		return stationsfetcher.GetCurrentSongPlayingShoutcast(station.StreamURL)
 	}
+}
+
+// gets the imageURL for song
+func GetImageURLForSong(song *stream.Song) error {
+	BASE_URL := "http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key="
+	url := BASE_URL + config.LAST_FM_API_KEY + "&artist=" + song.Name + "&track=" + song.Title + "&format=json"
+
+	// make the request
+	res, err := basecontroller.MakeRequest(url, http.MethodGet, 5)
+
+	// parse the response
+	type GetSongInfoResponse struct {
+		Track struct {
+			Album struct {
+				Images []map[string]string `json:"image"`
+			}	`json:"album"`
+		}`json:"track"`
+	}
+	var response GetSongInfoResponse
+	err = json.Unmarshal(res, &response)
+	if err != nil {
+		return  err
+	}
+
+	// get the largest image in the response, which is the last one in the array
+	if len(response.Track.Album.Images) > 0 {
+		image := response.Track.Album.Images[len(response.Track.Album.Images)-1]
+		if imageURL, ok := image["#text"]; ok {
+			song.ImageURL = imageURL
+			return nil
+		}
+	}
+	return errors.New("Error parsing imageUrl")
 }

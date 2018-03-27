@@ -50,6 +50,10 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 	}
 
 	response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, response.CurrentStation)
+	err = streamhelper.GetImageURLForSong(response.CurrentSong)
+	if err != nil {
+		log.Println(err)
+	}
 
 	basecontroller.SendResponse(w, response)
 }
@@ -101,6 +105,10 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response.CurrentSong, err = streamhelper.GetCurrentSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt, station)
 	if err != nil {
 		panic(err)
+	}
+	err = streamhelper.GetImageURLForSong(response.CurrentSong)
+	if err != nil {
+		log.Println(err)
 	}
 
 	// update user in db

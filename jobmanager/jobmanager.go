@@ -160,7 +160,7 @@ func (jm *JobManager) RegisterRecommenderJobs() {
 	// add handler for job
 	pool.Job(recommenderjobsmanager.RecommenderJobName(), (*Context).runRecommenderJob)
 
-	// enqueue initial stream job
+	// enqueue initial recommender job
 	jm.enqueueRecommenderJob()
 }
 

@@ -79,6 +79,10 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 		response.CurrentStation = station
 		response.CurrentSong = song
 		response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
+		err := streamhelper.GetImageURLForSong(response.CurrentSong)
+		if err != nil {
+			log.Println(err)
+		}
 		log.Println(response.CurrentStation.Name + ", " + response.CurrentSong.Name + " - " + response.CurrentSong.Title)
 
 		// send android notification
