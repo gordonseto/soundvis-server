@@ -132,10 +132,9 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		fmt.Println(err)
 	} else if userAgent == authentication.ANDROID {
 		// else send socket message to DE1 connection
-		userId := "3"
-		err = socketmanager.Shared().SendStreamUpdateMessage(userId, response)
+		err = socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), response)
 		if err != nil {
-			fmt.Println("Socket error for userId: " + userId)
+			fmt.Println("Socket error for userId: " + user.Id.Hex())
 			fmt.Println(err)
 		}
 	}

@@ -59,8 +59,8 @@ for user_id, station_durations in aggregated_sessions.items():
 print("Done printing users values")
 
 from random import *
-def create_user_with_ratings(user_id, genre):
-    cursor = stations_repository.find({"genre": genre})
+def create_user_with_ratings(user_id, genres):
+    cursor = stations_repository.find({"genre": {"$in": genres}})
     total = 0
     for document in cursor:
         if user_id not in aggregated_sessions:
@@ -74,24 +74,36 @@ def create_user_with_ratings(user_id, genre):
         for document in stations_repository.find({}):
             station_id = str(document["_id"])
             if station_id not in aggregated_sessions[user_id]:
-                # random duration between 0 and 5 ins
+                # random duration between 0 and 5 mins
                 random_duration = randint(0, 60 * 5)
                 aggregated_sessions[user_id][station_id] = random_duration
                 total += random_duration
         aggregated_sessions[user_id]['total'] = total
 
 # create fake users that only listen to specific genre
-STRIDE = 100
+STRIDE = 50
 for x in range(0, STRIDE):
-    create_user_with_ratings(x, "80s")
+    create_user_with_ratings(x, ["80s"])
 for x in range(STRIDE, 2*STRIDE):
-    create_user_with_ratings(x, "Top 40")
-for x in range(2*STRIDE, 3*STRIDE):
-    create_user_with_ratings(x, "Pop")
+    create_user_with_ratings(x, ["Top 40", "Pop"])
 for x in range(3*STRIDE, 4*STRIDE):
-    create_user_with_ratings(x, "Dance")
+    create_user_with_ratings(x, ["Dance", "Drum and Bass", "Electronic", "House"])
 for x in range(4*STRIDE, 5*STRIDE):
-    create_user_with_ratings(x, "Oldies")
+    create_user_with_ratings(x, ["Oldies", "Old Time Radio", "60s", "70s"])
+for x in range(5 * STRIDE, 6 * STRIDE):
+    create_user_with_ratings(x, ["News", "Talk", "Comedy"])
+for x in range(6 * STRIDE, 7 * STRIDE):
+    create_user_with_ratings(x, ["Rock", "Classic Rock", "Electric Blues", "Hard Rock", "Blues"])
+for x in range(7 * STRIDE, 8 * STRIDE):
+    create_user_with_ratings(x, ["Folk", "Country", "Hot Country Hits"])
+for x in range(8 * STRIDE, 9 * STRIDE):
+    create_user_with_ratings(x, ["JPOP", "Japanese", "Asian"])
+for x in range(9 * STRIDE, 10 * STRIDE):
+    create_user_with_ratings(x, ["Classical", "Baroque"])
+for x in range(10 * STRIDE, 11 * STRIDE):
+    create_user_with_ratings(x, ["Jazz", "Smooth Jazz"])
+for x in range(11 * STRIDE, 12 * STRIDE):
+    create_user_with_ratings(x, ["Indian", "Bollywood"])
 
 ratings_dict = {'userID': [], 'itemID': [], 'rating': []}
 
