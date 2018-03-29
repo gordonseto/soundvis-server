@@ -33,7 +33,7 @@ func (rjm *RecommenderJobsManager) RunTrainer() {
 		log.Println(err)
 		return
 	}
-	// number of listening sessions has changed, re-run trainer
+	// if number of listening sessions has changed, re-run trainer
 	if rjm.numSessions != numSessions {
 		rjm.numSessions = numSessions
 		log.Println("Running trainer...")

@@ -78,7 +78,6 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 }
 
 func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamIO.GetCurrentStreamResponse) error {
-	userId = "3"
 	conn, ok := sm.connections[userId]
 	if !ok {
 		return errors.New("No connection found for userId: " + userId)
