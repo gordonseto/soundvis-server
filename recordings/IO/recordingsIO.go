@@ -27,10 +27,6 @@ type UpdateRecordingRequest struct {
 	EndDate int64 	`json:"endDate"`
 }
 
-type DeleteRecordingRequest struct {
-	RecordingId string `json:"recordingId"`
-}
-
 type DeleteRecordingResponse struct {
 	Ok bool	`json:"ok"`
 }

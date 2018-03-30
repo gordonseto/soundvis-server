@@ -40,7 +40,7 @@ func (rc *RecordingsController) PUTPath() string {
 }
 
 func (rc *RecordingsController) DELETEPath() string {
-	return "/recordings"
+	return "/recordings/:id"
 }
 
 func NewRecordingsController() *RecordingsController {
@@ -257,20 +257,14 @@ func (rc *RecordingsController) DeleteRecording(w http.ResponseWriter, r *http.R
 		panic(err)
 	}
 
-	request := recordingsIO.DeleteRecordingRequest{}
-	err = json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		panic(err)
-	}
+	recordingId := p.ByName("id")
 
 	// make sure request has recordingId
-	if request.RecordingId == "" {
+	if recordingId == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "RecordingId is required")
 		return
 	}
-
-	recordingId := request.RecordingId
 
 	// get recording
 	recording, err := recordingsrepository.Shared().FindRecordingById(recordingId)
