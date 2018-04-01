@@ -82,9 +82,10 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 	if !ok {
 		return errors.New("No connection found for userId: " + userId)
 	}
-	message := streamUpdateResponseToSocketMessage(&response)
-	log.Println(message)
-	err := conn.WriteMessage(websocket.TextMessage, []byte(message))
+	//message := streamUpdateResponseToSocketMessage(&response)
+	//log.Println(message)
+	err := conn.WriteJSON(response)
+	//err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 	return err
 }
 
