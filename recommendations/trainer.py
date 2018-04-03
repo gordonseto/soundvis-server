@@ -42,10 +42,11 @@ def create_rating(duration, total_duration):
 from bson import ObjectId
 def print_station_genre_and_rating(station_id, rating):
     station = stations_repository.find_one({"_id": ObjectId(station_id)})
-    if 'genre' in station:
-        print(station['genre'], rating)
-    else:
-        print("Genre not found for ", station_id)
+    if station != None:
+        if 'genre' in station:
+            print(station['genre'], rating)
+        else:
+            print("Genre not found for ", station_id)
 
 # print out all real user's ratings
 print("Users values:")

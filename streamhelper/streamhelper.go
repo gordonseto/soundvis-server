@@ -28,7 +28,7 @@ func GetStreamURL(currentPlaying string, currentStation *models.Station) string 
 			log.Println("Recording not found, currentPlaying - ", currentPlaying)
 			return ""
 		}
-		return recording.RecordingURL
+		return config.BASE_URL + recording.RecordingURL
 	} else {
 		if currentStation != nil {
 			return currentStation.StreamURL
