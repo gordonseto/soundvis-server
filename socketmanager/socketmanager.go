@@ -79,8 +79,9 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 		}
 		response, err := stream.UpdateUsersStream(&request, user, authentication.DE1)
 		if err != nil {
-			log.Println("UserId: " + userId + " UpdateUsersStream:", err)
+			log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
 		} else {
+			log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
 			err = conn.WriteJSON(response)
 			if err != nil {
 				log.Println("UserId: " + userId + " Write:", err)
