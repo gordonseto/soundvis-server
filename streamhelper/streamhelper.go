@@ -120,6 +120,10 @@ func GetCurrentSongPlaying(currentPlaying string, progress int64, station *model
 
 // gets the imageURL for song
 func GetImageURLForSong(song *stream.Song) error {
+	if song == nil {
+		return errors.New("Song is nil")
+	}
+
 	BASE_URL := "http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key="
 	url := BASE_URL + config.LAST_FM_API_KEY + "&artist=" + song.Name + "&track=" + song.Title + "&format=json"
 
