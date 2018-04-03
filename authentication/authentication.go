@@ -10,12 +10,16 @@ import (
 var HEADER_USER_ID_KEY = "userId"
 var HEADER_USER_AGENT_KEY = "User-Agent"
 
-func CheckAuthentication(r *http.Request,) (*models.User, error) {
+func CheckAuthentication(r *http.Request) (*models.User, error) {
 	userId := r.Header.Get(HEADER_USER_ID_KEY)
 	if (userId == "") {
 		err := errors.New("User not authorized")
 		return nil, err
 	}
+	return FindUser(userId)
+}
+
+func FindUser(userId string) (*models.User, error) {
 	user, err := usersrepository.Shared().FindUserById(userId)
 	if err != nil {
 		return nil, errors.New("User does not exist")

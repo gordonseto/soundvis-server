@@ -15,6 +15,7 @@ import (
 	"time"
 	"github.com/gordonseto/soundvis-server/listeningsessions/repositories"
 	"log"
+	"github.com/gordonseto/soundvis-server/users/models"
 )
 
 type (
@@ -78,10 +79,19 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
+	response, err := UpdateUsersStream(&request, user, userAgent)
+	if err != nil {
+		panic(err)
+	}
+
+	basecontroller.SendResponse(w, response)
+}
+
+func UpdateUsersStream(request *streamIO.SetCurrentStreamRequest, user *models.User, userAgent int) (*streamIO.GetCurrentStreamResponse, error) {
 	// check if stream is valid
 	station, err := streamhelper.GetStation(request.CurrentStream)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// hold onto the user's previous currentPlaying and streamUpdatedAt to save as a listening session
@@ -104,7 +114,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
 	response.CurrentSong, err = streamhelper.GetCurrentSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt, station)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = streamhelper.GetImageURLForSong(response.CurrentSong)
 	if err != nil {
@@ -114,7 +124,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	// update user in db
 	err = usersrepository.Shared().UpdateUser(user)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// save previous listening session if needed
@@ -139,5 +149,5 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	basecontroller.SendResponse(w, response)
+	return &response, nil
 }

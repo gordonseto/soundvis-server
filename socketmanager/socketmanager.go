@@ -9,6 +9,8 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/IO"
 	"fmt"
 	"sync"
+	"github.com/gordonseto/soundvis-server/stream/controllers"
+	"github.com/gordonseto/soundvis-server/authentication"
 )
 
 type SocketManager struct {
@@ -63,16 +65,27 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 		}()
 	defer conn.Close()
 	for {
-		mt, message, err := conn.ReadMessage()
+		request := streamIO.SetCurrentStreamRequest{}
+		err := conn.ReadJSON(&request)
 		if err != nil {
 			log.Println("UserId: " + userId + " Read: ", err)
 			break
 		}
-		log.Printf("UserId: " + userId + " Recv: %s", message)
-		err = conn.WriteMessage(mt, message)
+		log.Printf("UserId: " + userId + " Recv: ", request)
+		user, err := authentication.FindUser(userId)
 		if err != nil {
-			log.Println("UserId: " + userId + " Write:", err)
+			log.Println("UserId: " + userId + " does not exist")
 			break
+		}
+		response, err := stream.UpdateUsersStream(&request, user, authentication.DE1)
+		if err != nil {
+			log.Println("UserId: " + userId + " UpdateUsersStream:", err)
+		} else {
+			err = conn.WriteJSON(response)
+			if err != nil {
+				log.Println("UserId: " + userId + " Write:", err)
+				break
+			}
 		}
 	}
 }
