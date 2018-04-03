@@ -114,6 +114,9 @@ func GetCurrentSongPlaying(currentPlaying string, progress int64, station *model
 		}
 		return nil, errors.New("Tracklist is empty")
 	} else {
+		if station.StreamURL == "" {
+			return nil, errors.New("Station has no streamURL")
+		}
 		return stationsfetcher.GetCurrentSongPlayingShoutcast(station.StreamURL)
 	}
 }

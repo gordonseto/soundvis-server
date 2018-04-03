@@ -72,13 +72,13 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 			log.Println("UserId: " + userId + " Read: ", err)
 			break
 		}
-		log.Println("UserId: " + userId + " Msg: ", msg)
+		log.Println("UserId: " + userId + " Msg: ", string(msg))
 		user, err := authentication.FindUser(userId)
 		if err != nil {
 			log.Println("UserId: " + userId + " does not exist")
 			break
 		}
-		request := SocketUpdateMessageToSetCurrentStreamRequest(string(msg))
+		request := socketUpdateMessageToSetCurrentStreamRequest(string(msg))
 		if request != nil {
 			log.Println("UserId: " + userId + "Msg JSON: ", request)
 			response, err := streamcontrollerhelper.UpdateUsersStream(request, user)
@@ -100,7 +100,7 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 	}
 }
 
-func SocketUpdateMessageToSetCurrentStreamRequest(message string) *streamIO.SetCurrentStreamRequest {
+func socketUpdateMessageToSetCurrentStreamRequest(message string) *streamIO.SetCurrentStreamRequest {
 	request := &streamIO.SetCurrentStreamRequest{}
 	messageArray := strings.Split(message, ",")
 	if len(messageArray) == 2 {
