@@ -9,8 +9,8 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/IO"
 	"fmt"
 	"sync"
-	"github.com/gordonseto/soundvis-server/stream/controllers"
 	"github.com/gordonseto/soundvis-server/authentication"
+	"github.com/gordonseto/soundvis-server/stream/helpers"
 )
 
 type SocketManager struct {
@@ -77,7 +77,7 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 			log.Println("UserId: " + userId + " does not exist")
 			break
 		}
-		response, err := stream.UpdateUsersStream(&request, user, authentication.DE1)
+		response, err := streamcontrollerhelper.UpdateUsersStream(&request, user)
 		if err != nil {
 			log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
 		} else {
