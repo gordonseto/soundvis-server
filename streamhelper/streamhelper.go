@@ -30,7 +30,10 @@ func GetStreamURL(currentPlaying string, currentStation *models.Station) string 
 		}
 		return recording.RecordingURL
 	} else {
-		return currentStation.StreamURL
+		if currentStation != nil {
+			return currentStation.StreamURL
+		}
+		return ""
 	}
 }
 
@@ -53,8 +56,11 @@ func GetCurrentStationAndSongPlaying(currentPlaying string, progress int64) (*mo
 	if err != nil {
 		return nil, nil, err
 	}
-	song, err := GetCurrentSongPlaying(currentPlaying, progress, station)
-	return station, song, err
+	if station != nil {
+		song, err := GetCurrentSongPlaying(currentPlaying, progress, station)
+		return station, song, err
+	}
+	return nil, nil, nil
 }
 
 // gets the station from currentPlaying

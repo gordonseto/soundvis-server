@@ -37,6 +37,7 @@ func StreamJobName() string {
 // sends socket message and android notification if song has changed
 func (sjm *StreamJobManager) RefreshNowPlaying() {
 	users, err := usersrepository.Shared().FindUsersByIsPlaying(true)
+
 	if err != nil {
 		log.Println(err)
 		return
