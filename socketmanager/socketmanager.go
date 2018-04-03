@@ -12,6 +12,7 @@ import (
 	"github.com/gordonseto/soundvis-server/authentication"
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"github.com/gordonseto/soundvis-server/notifications"
+	"strings"
 )
 
 type SocketManager struct {
@@ -66,34 +67,52 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 		}()
 	defer conn.Close()
 	for {
-		request := streamIO.SetCurrentStreamRequest{}
-		err := conn.ReadJSON(&request)
+		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("UserId: " + userId + " Read: ", err)
 			break
 		}
-		log.Printf("UserId: " + userId + " Recv: ", request)
+		log.Println("UserId: " + userId + " Msg: ", msg)
 		user, err := authentication.FindUser(userId)
 		if err != nil {
 			log.Println("UserId: " + userId + " does not exist")
 			break
 		}
-		response, err := streamcontrollerhelper.UpdateUsersStream(&request, user)
-		if err != nil {
-			log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
-		} else {
-			log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
-
-			err = conn.WriteJSON(response)
+		request := SocketUpdateMessageToSetCurrentStreamRequest(string(msg))
+		if request != nil {
+			log.Println("UserId: " + userId + "Msg JSON: ", request)
+			response, err := streamcontrollerhelper.UpdateUsersStream(request, user)
 			if err != nil {
-				log.Println("UserId: " + userId + " Write:", err)
-				break
-			}
+				log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
+			} else {
+				log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
 
-			err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
-			log.Println(err)
+				err = conn.WriteJSON(response)
+				if err != nil {
+					log.Println("UserId: " + userId + " Write:", err)
+					break
+				}
+
+				err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
+				log.Println(err)
+			}
 		}
 	}
+}
+
+func SocketUpdateMessageToSetCurrentStreamRequest(message string) *streamIO.SetCurrentStreamRequest {
+	request := &streamIO.SetCurrentStreamRequest{}
+	messageArray := strings.Split(message, ",")
+	if len(messageArray) == 2 {
+		if messageArray[0] == "1" {
+			request.IsPlaying = true
+		} else {
+			request.IsPlaying = false
+		}
+		request.CurrentStream = messageArray[1]
+		return request
+	}
+	return nil
 }
 
 func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamIO.GetCurrentStreamResponse) error {
