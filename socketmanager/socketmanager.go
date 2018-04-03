@@ -11,6 +11,7 @@ import (
 	"sync"
 	"github.com/gordonseto/soundvis-server/authentication"
 	"github.com/gordonseto/soundvis-server/stream/helpers"
+	"github.com/gordonseto/soundvis-server/notifications"
 )
 
 type SocketManager struct {
@@ -82,11 +83,15 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 			log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
 		} else {
 			log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
+
 			err = conn.WriteJSON(response)
 			if err != nil {
 				log.Println("UserId: " + userId + " Write:", err)
 				break
 			}
+
+			err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
+			log.Println(err)
 		}
 	}
 }
