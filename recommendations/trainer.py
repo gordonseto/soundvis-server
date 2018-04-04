@@ -103,8 +103,8 @@ for x in range(4*STRIDE, 5*STRIDE):
 #     create_user_with_ratings(x, ["Classical", "Baroque"])
 for x in range(10 * STRIDE, 11 * STRIDE):
     create_user_with_ratings(x, ["Jazz", "Smooth Jazz"])
-for x in range(11 * STRIDE, 12 * STRIDE):
-    create_user_with_ratings(x, ["Indian", "Bollywood"])
+# for x in range(11 * STRIDE, 12 * STRIDE):
+#     create_user_with_ratings(x, ["Indian", "Bollywood"])
 
 ratings_dict = {'userID': [], 'itemID': [], 'rating': []}
 

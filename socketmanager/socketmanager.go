@@ -97,6 +97,8 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 				err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
 				log.Println(err)
 			}
+		} else {
+			log.Println("Socket message not in correct format")
 		}
 	}
 }
