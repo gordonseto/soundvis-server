@@ -67,12 +67,16 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 
+	log.Println("Found user:")
+	log.Println(user.Id)
 	// check if valid user-agent
 	userAgent, err := authentication.GetUserAgent(r)
 	if err != nil {
 		panic(err)
 	}
 
+	log.Println("User agent:")
+	log.Println(userAgent)
 	// parse request
 	request := streamIO.SetCurrentStreamRequest{}
 	err = json.NewDecoder(r.Body).Decode(&request)

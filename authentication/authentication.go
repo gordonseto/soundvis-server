@@ -5,6 +5,7 @@ import (
 	"github.com/gordonseto/soundvis-server/users/models"
 	"errors"
 	"github.com/gordonseto/soundvis-server/users/repositories"
+	"log"
 )
 
 var HEADER_USER_ID_KEY = "userId"
@@ -12,6 +13,7 @@ var HEADER_USER_AGENT_KEY = "User-Agent"
 
 func CheckAuthentication(r *http.Request) (*models.User, error) {
 	userId := r.Header.Get(HEADER_USER_ID_KEY)
+	log.Print("userId: ", userId)
 	if (userId == "") {
 		err := errors.New("User not authorized")
 		return nil, err
