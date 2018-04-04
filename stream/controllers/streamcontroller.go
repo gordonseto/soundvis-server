@@ -30,6 +30,10 @@ func (sc *StreamController) POSTPath() string {
 	return "/stream"
 }
 
+func (sc *StreamController) DE1PostPath() string {
+	return "/stream/:isPlaying/:currentStream/:currentVolume"
+}
+
 func NewStreamController() *StreamController {
 	return &StreamController{}
 }
@@ -123,4 +127,12 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	}
 
 	basecontroller.SendResponse(w, response)
+}
+
+func (sc *StreamController) SetCurrentStreamDE1(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	log.Println(p.ByName("isPlaying"))
+	log.Println(p.ByName("currentStream"))
+	log.Println(p.ByName("currentVolume"))
+
+	log.Println("Hello world!")
 }
