@@ -74,11 +74,8 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	sc.handleSetCurrentStreamRequest(w, r, &request)
 }
 
+// this is not good practice to put an update on a GET, but this is the easiest way for DE1 to update stream
 func (sc *StreamController) SetCurrentStreamDE1(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	log.Println(p.ByName("isPlaying"))
-	log.Println(p.ByName("currentStream"))
-	log.Println(p.ByName("currentVolume"))
-
 	request := streamIO.SetCurrentStreamRequest{}
 	if p.ByName("isPlaying") == "1" {
 		request.IsPlaying = true
