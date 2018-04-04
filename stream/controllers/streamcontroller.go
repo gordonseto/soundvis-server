@@ -14,7 +14,7 @@ import (
 	"time"
 	"log"
 	"github.com/gordonseto/soundvis-server/stream/helpers"
-	"net/http/httputil"
+	"strconv"
 )
 
 type (
@@ -64,51 +64,49 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 }
 
 func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	r.ParseForm()
-	for key, value := range r.Form {
-		fmt.Println("%s = %s\n", key, value)
+	// parse request
+	request := streamIO.SetCurrentStreamRequest{}
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		panic(err)
 	}
 
-	log.Println("New request at /stream:")
-	log.Println(r)
+	sc.handleSetCurrentStreamRequest(w, r, &request)
+}
 
-	log.Println("BODY:")
-	log.Println(r.Body)
-	log.Println("End body")
+func (sc *StreamController) SetCurrentStreamDE1(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	log.Println(p.ByName("isPlaying"))
+	log.Println(p.ByName("currentStream"))
+	log.Println(p.ByName("currentVolume"))
+
+	request := streamIO.SetCurrentStreamRequest{}
+	if p.ByName("isPlaying") == "1" {
+		request.IsPlaying = true
+	}
+	request.CurrentStream = p.ByName("currentStream")
+	volume, err := strconv.Atoi(p.ByName("currentVolume"))
+	if err != nil {
+		volume = 0
+	}
+	request.CurrentVolume = volume
+
+	sc.handleSetCurrentStreamRequest(w, r, &request)
+}
+
+func (sc *StreamController) handleSetCurrentStreamRequest(w http.ResponseWriter, r *http.Request, request *streamIO.SetCurrentStreamRequest) {
 	// check if authenticated
 	user, err := authentication.CheckAuthentication(r)
 	if err != nil {
 		panic(err)
 	}
 
-	log.Println("Found user:")
-	log.Println(user.Id)
 	// check if valid user-agent
 	userAgent, err := authentication.GetUserAgent(r)
 	if err != nil {
 		panic(err)
 	}
 
-
-	log.Println("User agent:")
-	log.Println(userAgent)
-
-	requestDump, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(string(requestDump))
-
-	// parse request
-	request := streamIO.SetCurrentStreamRequest{}
-	err = json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		panic(err)
-	}
-	log.Println("Request parsed:")
-	log.Println(request)
-
-	response, err := streamcontrollerhelper.UpdateUsersStream(&request, user)
+	response, err := streamcontrollerhelper.UpdateUsersStream(request, user)
 	if err != nil {
 		panic(err)
 	}
@@ -127,12 +125,4 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	}
 
 	basecontroller.SendResponse(w, response)
-}
-
-func (sc *StreamController) SetCurrentStreamDE1(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	log.Println(p.ByName("isPlaying"))
-	log.Println(p.ByName("currentStream"))
-	log.Println(p.ByName("currentVolume"))
-
-	log.Println("Hello world!")
 }
