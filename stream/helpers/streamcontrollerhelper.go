@@ -27,8 +27,11 @@ func UpdateUsersStream(request *streamIO.SetCurrentStreamRequest, user *models.U
 	user.CurrentPlaying = request.CurrentStream
 	user.CurrentVolume = request.CurrentVolume
 
-	// set the user's streamUpdatedAt
-	user.StreamUpdatedAt = time.Now().Unix()
+	// set the user's streamUpdatedAt if isPlaying or CurrentPlaying has changed
+	// if only volume has changed, do not update streamUpdatedAt
+	if previousIsPlaying != user.IsPlaying || previousPlaying != user.CurrentPlaying {
+		user.StreamUpdatedAt = time.Now().Unix()
+	}
 
 	// create response
 	response := streamIO.GetCurrentStreamResponse{}
