@@ -55,8 +55,8 @@ func UpdateUsersStream(request *streamIO.SetCurrentStreamRequest, user *models.U
 		return nil, err
 	}
 
-	// save previous listening session if needed
-	if previousIsPlaying {
+	// save previous listening session if needed, will not add one if only volume has changed
+	if previousIsPlaying && user.StreamUpdatedAt != previousStreamUpdatedAt {
 		err = listeningsessionsrepository.Shared().InsertListeningSession(user.Id.Hex(), previousPlaying, time.Now().Unix() - previousStreamUpdatedAt, previousStreamUpdatedAt)
 		if err != nil {
 			log.Println("Error saving user's listening session: ")
