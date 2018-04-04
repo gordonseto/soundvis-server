@@ -60,6 +60,11 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 }
 
 func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	r.ParseForm()
+	for key, value := range r.Form {
+		fmt.Println("%s = %s\n", key, value)
+	}
+
 	log.Println("New request at /stream:")
 	log.Println(r)
 
