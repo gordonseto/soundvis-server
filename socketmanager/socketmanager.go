@@ -11,6 +11,9 @@ import (
 	"sync"
 	"strings"
 	"strconv"
+	"github.com/gordonseto/soundvis-server/authentication"
+	"github.com/gordonseto/soundvis-server/stream/helpers"
+	"github.com/gordonseto/soundvis-server/notifications"
 )
 
 type SocketManager struct {
@@ -66,43 +69,43 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 		}()
 	defer conn.Close()
 	for {
-		mt, msg, err := conn.ReadMessage()
+		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("UserId: " + userId + " Read: ", err)
 			break
 		}
 		log.Println("UserId: " + userId + " Msg: ", string(msg))
-		err = conn.WriteMessage(mt, msg)
-		if err != nil {
-			log.Println("UserId: " + userId + " Write:", err)
-			break
-		}
-		//user, err := authentication.FindUser(userId)
+		//err = conn.WriteMessage(mt, msg)
 		//if err != nil {
-		//	log.Println("UserId: " + userId + " does not exist")
+		//	log.Println("UserId: " + userId + " Write:", err)
 		//	break
 		//}
-		//request := socketUpdateMessageToSetCurrentStreamRequest(string(msg))
-		//if request != nil {
-		//	log.Println("UserId: " + userId + "Msg JSON: ", request)
-		//	response, err := streamcontrollerhelper.UpdateUsersStream(request, user)
-		//	if err != nil {
-		//		log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
-		//	} else {
-		//		log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
-		//
-		//		err = conn.WriteJSON(response)
-		//		if err != nil {
-		//			log.Println("UserId: " + userId + " Write:", err)
-		//			break
-		//		}
-		//
-		//		err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
-		//		log.Println(err)
-		//	}
-		//} else {
-		//	log.Println("Socket message not in correct format")
-		//}
+		user, err := authentication.FindUser(userId)
+		if err != nil {
+			log.Println("UserId: " + userId + " does not exist")
+			break
+		}
+		request := socketUpdateMessageToSetCurrentStreamRequest(string(msg))
+		if request != nil {
+			log.Println("UserId: " + userId + "Msg JSON: ", request)
+			response, err := streamcontrollerhelper.UpdateUsersStream(request, user)
+			if err != nil {
+				log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
+			} else {
+				log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
+
+				err = conn.WriteJSON(response)
+				if err != nil {
+					log.Println("UserId: " + userId + " Write:", err)
+					break
+				}
+
+				err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
+				log.Println(err)
+			}
+		} else {
+			log.Println("Socket message not in correct format")
+		}
 	}
 }
 
