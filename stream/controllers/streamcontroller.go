@@ -14,6 +14,7 @@ import (
 	"time"
 	"log"
 	"github.com/gordonseto/soundvis-server/stream/helpers"
+	"net/http/httputil"
 )
 
 type (
@@ -77,6 +78,13 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 
 	log.Println("User agent:")
 	log.Println(userAgent)
+
+	requestDump, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(requestDump))
+
 	// parse request
 	request := streamIO.SetCurrentStreamRequest{}
 	err = json.NewDecoder(r.Body).Decode(&request)
