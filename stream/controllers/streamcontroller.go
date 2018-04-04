@@ -62,6 +62,10 @@ func (sc *StreamController) GetCurrentStream(w http.ResponseWriter, r *http.Requ
 func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	log.Println("New request at /stream:")
 	log.Println(r)
+
+	log.Println("BODY:")
+	log.Println(r.Body)
+	log.Println("End body")
 	// check if authenticated
 	user, err := authentication.CheckAuthentication(r)
 	if err != nil {
@@ -75,6 +79,7 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		panic(err)
 	}
+
 
 	log.Println("User agent:")
 	log.Println(userAgent)
