@@ -77,6 +77,7 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 		response := streamIO.GetCurrentStreamResponse{}
 		response.IsPlaying = user.IsPlaying
 		response.CurrentPlaying = user.CurrentPlaying
+		response.CurrentVolume = user.CurrentVolume
 		response.CurrentStation = station
 		response.CurrentSong = song
 		response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)

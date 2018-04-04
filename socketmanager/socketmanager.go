@@ -13,6 +13,7 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"github.com/gordonseto/soundvis-server/notifications"
 	"strings"
+	"strconv"
 )
 
 type SocketManager struct {
@@ -103,13 +104,14 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 func socketUpdateMessageToSetCurrentStreamRequest(message string) *streamIO.SetCurrentStreamRequest {
 	request := &streamIO.SetCurrentStreamRequest{}
 	messageArray := strings.Split(message, ",")
-	if len(messageArray) == 2 {
+	if len(messageArray) == 3 {
 		if messageArray[0] == "1" {
 			request.IsPlaying = true
 		} else {
 			request.IsPlaying = false
 		}
 		request.CurrentStream = messageArray[1]
+		request.CurrentVolume, _ = strconv.Atoi(messageArray[2])
 		return request
 	}
 	return nil

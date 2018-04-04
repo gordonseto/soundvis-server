@@ -8,6 +8,7 @@ import (
 type GetCurrentStreamResponse struct {
 	IsPlaying bool 	`json:"isPlaying"`
 	CurrentPlaying string `json:"currentPlaying"`
+	CurrentVolume	int	`json:"currentVolume"`
 	CurrentStation *models.Station	`json:"currentStation"`
 	CurrentStreamURL string	`json:"currentStreamUrl"`
 	CurrentSong *stream.Song `json:"currentSong"`
@@ -16,4 +17,5 @@ type GetCurrentStreamResponse struct {
 type SetCurrentStreamRequest struct {
 	IsPlaying bool `json:"isPlaying"`
 	CurrentStream string	`json:"currentStream"`
+	CurrentVolume	int	`json:"currentVolume"`
 }

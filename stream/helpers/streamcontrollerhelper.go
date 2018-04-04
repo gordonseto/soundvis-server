@@ -25,6 +25,7 @@ func UpdateUsersStream(request *streamIO.SetCurrentStreamRequest, user *models.U
 	// set user's values to match request
 	user.IsPlaying = request.IsPlaying
 	user.CurrentPlaying = request.CurrentStream
+	user.CurrentVolume = request.CurrentVolume
 
 	// set the user's streamUpdatedAt
 	user.StreamUpdatedAt = time.Now().Unix()
@@ -33,6 +34,7 @@ func UpdateUsersStream(request *streamIO.SetCurrentStreamRequest, user *models.U
 	response := streamIO.GetCurrentStreamResponse{}
 	response.IsPlaying = user.IsPlaying
 	response.CurrentPlaying = user.CurrentPlaying
+	response.CurrentVolume = user.CurrentVolume
 	response.CurrentStation = station
 	response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, station)
 	response.CurrentSong, err = streamhelper.GetCurrentSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt, station)
