@@ -9,9 +9,6 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/IO"
 	"fmt"
 	"sync"
-	"github.com/gordonseto/soundvis-server/authentication"
-	"github.com/gordonseto/soundvis-server/stream/helpers"
-	"github.com/gordonseto/soundvis-server/notifications"
 	"strings"
 	"strconv"
 )
@@ -47,6 +44,7 @@ var upgrader = websocket.Upgrader{
 func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	fmt.Println("UserId from header: " + r.Header.Get("userId"))
 	userId := r.Header.Get("userId")
+	userId = "5ac3cf9f8ac834137ba00c3b"
 	if userId == "" {
 		panic(errors.New("UserId is required for socket connection"))
 	}
@@ -68,38 +66,43 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 		}()
 	defer conn.Close()
 	for {
-		_, msg, err := conn.ReadMessage()
+		mt, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("UserId: " + userId + " Read: ", err)
 			break
 		}
 		log.Println("UserId: " + userId + " Msg: ", string(msg))
-		user, err := authentication.FindUser(userId)
+		err = conn.WriteMessage(mt, msg)
 		if err != nil {
-			log.Println("UserId: " + userId + " does not exist")
+			log.Println("UserId: " + userId + " Write:", err)
 			break
 		}
-		request := socketUpdateMessageToSetCurrentStreamRequest(string(msg))
-		if request != nil {
-			log.Println("UserId: " + userId + "Msg JSON: ", request)
-			response, err := streamcontrollerhelper.UpdateUsersStream(request, user)
-			if err != nil {
-				log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
-			} else {
-				log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
-
-				err = conn.WriteJSON(response)
-				if err != nil {
-					log.Println("UserId: " + userId + " Write:", err)
-					break
-				}
-
-				err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
-				log.Println(err)
-			}
-		} else {
-			log.Println("Socket message not in correct format")
-		}
+		//user, err := authentication.FindUser(userId)
+		//if err != nil {
+		//	log.Println("UserId: " + userId + " does not exist")
+		//	break
+		//}
+		//request := socketUpdateMessageToSetCurrentStreamRequest(string(msg))
+		//if request != nil {
+		//	log.Println("UserId: " + userId + "Msg JSON: ", request)
+		//	response, err := streamcontrollerhelper.UpdateUsersStream(request, user)
+		//	if err != nil {
+		//		log.Println("UserId: " + userId + " UpdateUsersStream Error:", err)
+		//	} else {
+		//		log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
+		//
+		//		err = conn.WriteJSON(response)
+		//		if err != nil {
+		//			log.Println("UserId: " + userId + " Write:", err)
+		//			break
+		//		}
+		//
+		//		err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
+		//		log.Println(err)
+		//	}
+		//} else {
+		//	log.Println("Socket message not in correct format")
+		//}
 	}
 }
 
