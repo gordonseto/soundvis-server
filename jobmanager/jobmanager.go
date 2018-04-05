@@ -27,7 +27,7 @@ var enqueuer *work.Enqueuer
 var redisPool *redis.Pool
 var pool *work.WorkerPool
 
-var STREAM_JOB_INTERVAL int64 = 5
+var STREAM_JOB_INTERVAL int64 = 1
 var RECOMMENDER_JOB_INTERVAL int64 = 5 * 60
 
 var instance *JobManager
