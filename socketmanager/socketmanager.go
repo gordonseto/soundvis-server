@@ -95,7 +95,7 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 			} else {
 				log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
 
-				err = conn.WriteJSON(response)
+				err = sm.SendStreamUpdateMessage(userId, *response)
 				if err != nil {
 					log.Println("UserId: " + userId + " Write:", err)
 					break
