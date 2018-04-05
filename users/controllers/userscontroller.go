@@ -9,7 +9,6 @@ import (
 	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/users/repositories"
 	"github.com/gordonseto/soundvis-server/config"
-	"os/user"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 	"github.com/gordonseto/soundvis-server/users/models"
