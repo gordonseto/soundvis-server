@@ -14,6 +14,7 @@ import (
 	"github.com/gordonseto/soundvis-server/authentication"
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"github.com/gordonseto/soundvis-server/notifications"
+	"github.com/gordonseto/soundvis-server/config"
 )
 
 type SocketManager struct {
@@ -50,7 +51,8 @@ func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httpr
 	// if from DE1, userId will be userId + "DE1", if from raspberry pi only userId
 	userId := r.Header.Get("userId")
 	if userId == "" {
-		userId = "5ac3cf9f8ac834137ba00c3b"
+		// TODO: Remove this
+		userId = config.DEFAULT_USER
 	}
 	if userId == "" {
 		panic(errors.New("UserId is required for socket connection"))

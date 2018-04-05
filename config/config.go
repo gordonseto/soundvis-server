@@ -9,3 +9,4 @@ var SHOUTCAST_API_KEY = "t7kGHgPoxtvtuUOc"
 var REDIS_NAMESPACE = "soundvis"
 var LAST_FM_API_KEY = "570d2867e174fab7613e983f71e23a61"
 var BASE_URL = "http://ec2-54-201-183-2.us-west-2.compute.amazonaws.com" + PORT
+var DEFAULT_USER = "5ac3cf9f8ac834137ba00c3b"

@@ -11,6 +11,7 @@ import (
 	"time"
 	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/users/repositories"
+	"github.com/gordonseto/soundvis-server/config"
 )
 
 type (
@@ -44,7 +45,9 @@ func (uc *UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p 
 	user := models.User{}
 	if err := usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
 		// no user found, create user
-		user.Id = bson.NewObjectId()
+		// TODO: Remove this
+		user.Id = bson.ObjectId(config.DEFAULT_USER)
+		//user.Id = bson.NewObjectId()
 		user.DeviceToken = request.DeviceToken
 		user.CreatedAt = time.Now().Unix()
 		// insert into collection
