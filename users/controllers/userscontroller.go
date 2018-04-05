@@ -46,7 +46,7 @@ func (uc *UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p 
 	if err := usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
 		// no user found, create user
 		// TODO: Remove this
-		user.Id = bson.ObjectId(config.DEFAULT_USER)
+		user.Id = bson.ObjectIdHex(config.DEFAULT_USER)
 		//user.Id = bson.NewObjectId()
 		user.DeviceToken = request.DeviceToken
 		user.CreatedAt = time.Now().Unix()
