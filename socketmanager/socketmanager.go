@@ -159,6 +159,7 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 		Id: response.CurrentStation.Id,
 		Name: response.CurrentStation.Name,
 		Genre: response.CurrentStation.Genre,
+		Country: response.CurrentStation.Country,
 	}
 	responseCopy := streamIO.GetCurrentStreamResponse{
 		IsPlaying: response.IsPlaying,
