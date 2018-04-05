@@ -9,6 +9,10 @@ import (
 	"github.com/gordonseto/soundvis-server/general"
 	"github.com/gordonseto/soundvis-server/users/repositories"
 	"github.com/gordonseto/soundvis-server/config"
+	"os/user"
+	"gopkg.in/mgo.v2/bson"
+	"time"
+	"github.com/gordonseto/soundvis-server/users/models"
 )
 
 type (
@@ -40,32 +44,33 @@ func (uc *UsersController) CreateUser(w http.ResponseWriter, r *http.Request, p 
 
 	// find user in database, if already contained, just return user
 	// TODO: Add back in commented code
-	//user := models.User{}
-	user, err := usersrepository.Shared().FindUserById(config.DEFAULT_USER)
-	if err != nil {
-		panic(err)
+	user := models.User{}
+	//user, err := usersrepository.Shared().FindUserById(config.DEFAULT_USER)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//usersrepository.Shared().GetUsersRepository().RemoveId(user.Id)
+
+	if err := usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
+		 //no user found, create user
+	//	 TODO: Remove this
+		user.Id = bson.ObjectIdHex(config.DEFAULT_USER)
+		user.Id = bson.NewObjectId()
+		user.DeviceToken = request.DeviceToken
+		user.CreatedAt = time.Now().Unix()
+		// insert into collection
+		if err = usersrepository.Shared().GetUsersRepository().Insert(user); err != nil {
+			panic(err)
+		}
+		// find user in collection
+		if err = usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
+			 //if not found this time, there is an error
+			panic(err)
+		}
 	}
 
-	//if err := usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
-	//	// no user found, create user
-	//	// TODO: Remove this
-	//	user.Id = bson.ObjectIdHex(config.DEFAULT_USER)
-	//	//user.Id = bson.NewObjectId()
-	//	user.DeviceToken = request.DeviceToken
-	//	user.CreatedAt = time.Now().Unix()
-	//	// insert into collection
-	//	if err = usersrepository.Shared().GetUsersRepository().Insert(user); err != nil {
-	//		panic(err)
-	//	}
-	//	// find user in collection
-	//	if err = usersrepository.Shared().FindUserByDeviceToken(request.DeviceToken, &user); err != nil {
-	//		// if not found this time, there is an error
-	//		panic(err)
-	//	}
-	//}
-
 	response := usersIO.CreateUserResponse{}
-	response.User = *user
+	response.User = user
 
 	basecontroller.SendResponse(w, response)
 }
