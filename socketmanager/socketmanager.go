@@ -15,6 +15,7 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"github.com/gordonseto/soundvis-server/notifications"
 	"github.com/gordonseto/soundvis-server/config"
+	"github.com/gordonseto/soundvis-server/stations/models"
 )
 
 type SocketManager struct {
@@ -154,12 +155,21 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 	//log.Println(message)
 
 	// remove unnecessary fields when sending to DE1
-	response.CurrentStation.Country = nil
-	response.CurrentStation.StreamURL = ""
-	response.CurrentStation.CreatedAt = 0
-	response.CurrentStation.UpdatedAt = 0
+	stationCopy := models.Station{
+		Id: response.CurrentStation.Id,
+		Name: response.CurrentStation.Name,
+		Genre: response.CurrentStation.Genre,
+	}
+	responseCopy := streamIO.GetCurrentStreamResponse{
+		IsPlaying: response.IsPlaying,
+		CurrentPlaying: response.CurrentPlaying,
+		CurrentVolume: response.CurrentVolume,
+		CurrentStation: &stationCopy,
+		CurrentStreamURL: response.CurrentStreamURL,
+		CurrentSong: response.CurrentSong,
+	}
 
-	err := conn.WriteJSON(response)
+	err := conn.WriteJSON(responseCopy)
 	//err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 
 	return err
