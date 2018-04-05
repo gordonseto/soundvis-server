@@ -155,22 +155,22 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 	//log.Println(message)
 
 	// remove unnecessary fields when sending to DE1
-	stationCopy := models.Station{
-		Id: response.CurrentStation.Id,
-		Name: response.CurrentStation.Name,
-		Genre: response.CurrentStation.Genre,
-		Country: response.CurrentStation.Country,
-	}
-	responseCopy := streamIO.GetCurrentStreamResponse{
-		IsPlaying: response.IsPlaying,
-		CurrentPlaying: response.CurrentPlaying,
-		CurrentVolume: response.CurrentVolume,
-		CurrentStation: &stationCopy,
-		CurrentStreamURL: response.CurrentStreamURL,
-		CurrentSong: response.CurrentSong,
-	}
+	//stationCopy := models.Station{
+	//	Id: response.CurrentStation.Id,
+	//	Name: response.CurrentStation.Name,
+	//	Genre: response.CurrentStation.Genre,
+	//	Country: response.CurrentStation.Country,
+	//}
+	//responseCopy := streamIO.GetCurrentStreamResponse{
+	//	IsPlaying: response.IsPlaying,
+	//	CurrentPlaying: response.CurrentPlaying,
+	//	CurrentVolume: response.CurrentVolume,
+	//	CurrentStation: &stationCopy,
+	//	CurrentStreamURL: response.CurrentStreamURL,
+	//	CurrentSong: response.CurrentSong,
+	//}
 
-	err := conn.WriteJSON(responseCopy)
+	err := conn.WriteJSON(response)
 	//err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 
 	return err
