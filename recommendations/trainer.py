@@ -95,8 +95,8 @@ for x in range(4*STRIDE, 5*STRIDE):
 #     create_user_with_ratings(x, ["News", "Talk", "Comedy"])
 # for x in range(6 * STRIDE, 7 * STRIDE):
 #     create_user_with_ratings(x, ["Rock", "Classic Rock", "Electric Blues", "Hard Rock", "Blues"])
-# for x in range(7 * STRIDE, 8 * STRIDE):
-#     create_user_with_ratings(x, ["Folk", "Country", "Hot Country Hits"])
+for x in range(7 * STRIDE, 8 * STRIDE):
+    create_user_with_ratings(x, ["Country", "Hot Country Hits"])
 # for x in range(8 * STRIDE, 9 * STRIDE):
 #     create_user_with_ratings(x, ["JPOP", "Japanese", "Asian"])
 # for x in range(9 * STRIDE, 10 * STRIDE):
