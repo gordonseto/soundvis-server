@@ -133,6 +133,13 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 	}
 	//message := streamUpdateResponseToSocketMessage(&response)
 	//log.Println(message)
+
+	// remove unnecessary fields when sending to DE1
+	response.CurrentStation.Country = nil
+	response.CurrentStation.StreamURL = ""
+	response.CurrentStation.CreatedAt = 0
+	response.CurrentStation.UpdatedAt = 0
+
 	err := conn.WriteJSON(response)
 	//err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 	return err
