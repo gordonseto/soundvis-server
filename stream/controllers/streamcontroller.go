@@ -94,6 +94,13 @@ func (sc *StreamController) SetCurrentStreamDE1(w http.ResponseWriter, r *http.R
 	}
 	request.CurrentVolume = volume
 
+	// TODO: Remove this
+	user, err := authentication.CheckAuthentication(r)
+	if err != nil {
+		panic(err)
+	}
+	request.CurrentStream = user.CurrentPlaying
+
 	sc.handleSetCurrentStreamRequest(w, r, &request)
 }
 
