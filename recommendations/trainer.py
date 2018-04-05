@@ -64,6 +64,8 @@ def create_user_with_ratings(user_id, genres):
     cursor = stations_repository.find({"genre": {"$in": genres}})
     total = 0
     for document in cursor:
+        if str(document["genre"] == ""):
+            continue
         if user_id not in aggregated_sessions:
             aggregated_sessions[user_id] = {}
         station_id = str(document["_id"])
