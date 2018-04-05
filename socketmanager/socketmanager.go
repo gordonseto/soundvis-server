@@ -141,6 +141,7 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 	conn, ok := sm.connections[userId]
 	if !ok {
 		log.Println(userId + " socket error: ", errors.New("No connection found for userId: " + userId))
+		return
 	}
 	//message := streamUpdateResponseToSocketMessage(&response)
 	//log.Println(message)
