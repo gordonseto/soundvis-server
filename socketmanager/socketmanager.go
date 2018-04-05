@@ -15,8 +15,9 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"github.com/gordonseto/soundvis-server/notifications"
 	"github.com/gordonseto/soundvis-server/config"
-	"github.com/gordonseto/soundvis-server/streamjobs"
 	"github.com/gordonseto/soundvis-server/users/repositories"
+	"github.com/gordonseto/soundvis-server/streamhelper"
+	"time"
 )
 
 type SocketManager struct {
@@ -77,7 +78,18 @@ func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httpr
 	if err != nil {
 		log.Println("User not found")
 	} else {
-		streamjobmanager.Shared().CheckNowPlayingForUser(*user)
+		response := streamIO.GetCurrentStreamResponse{}
+		response.IsPlaying = user.IsPlaying
+		response.CurrentPlaying = user.CurrentPlaying
+		response.CurrentVolume = user.CurrentVolume
+
+		response.CurrentStation, response.CurrentSong, err =  streamhelper.GetCurrentStationAndSongPlaying(user.CurrentPlaying, time.Now().Unix() - user.StreamUpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+
+		response.CurrentStreamURL = streamhelper.GetStreamURL(user.CurrentPlaying, response.CurrentStation)
+		sm.SendStreamUpdateMessage(userId, response)
 	}
 
 	// listen at connection
