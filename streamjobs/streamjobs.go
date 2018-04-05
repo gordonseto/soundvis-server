@@ -89,8 +89,10 @@ func (sjm *StreamJobManager) checkNowPlayingForUser(user models.User) {
 
 		// send android notification
 		notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, response)
-		// send socket message
+		// send socket message to raspberry pi
 		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), response)
+		// send socket message to DE1
+		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex() + "DE1", response)
 	}
 }
 

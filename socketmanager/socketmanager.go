@@ -47,8 +47,11 @@ var upgrader = websocket.Upgrader{
 func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	log.Println("New socket connection!")
 	fmt.Println("UserId from header: " + r.Header.Get("userId"))
+	// if from DE1, userId will be userId + "DE1", if from raspberry pi only userId
 	userId := r.Header.Get("userId")
-	userId = "5ac3cf9f8ac834137ba00c3b"
+	if userId == "" {
+		userId = "5ac3cf9f8ac834137ba00c3b"
+	}
 	if userId == "" {
 		panic(errors.New("UserId is required for socket connection"))
 	}
@@ -100,6 +103,21 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 					log.Println("UserId: " + userId + " Write:", err)
 					break
 				}
+				// send socket message to PI if from DE1
+				if userId[len(userId)-3:] == "DE1" {
+					err = sm.SendStreamUpdateMessage(userId[:len(userId)-3], *response)
+					if err != nil {
+						log.Println("UserId: " + userId + " Write:", err)
+						break
+					}
+				} else {
+					// else send to DE1
+					err = sm.SendStreamUpdateMessage(userId + "DE1", *response)
+					if err != nil {
+						log.Println("UserId: " + userId + " Write:", err)
+						break
+					}
+				}
 
 				err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
 				log.Println(err)
@@ -127,6 +145,7 @@ func socketUpdateMessageToSetCurrentStreamRequest(message string) *streamIO.SetC
 }
 
 func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamIO.GetCurrentStreamResponse) error {
+	log.Println("SendStreamUpdateMessageUserId: ", userId)
 	conn, ok := sm.connections[userId]
 	if !ok {
 		return errors.New("No connection found for userId: " + userId)
@@ -142,6 +161,7 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 
 	err := conn.WriteJSON(response)
 	//err := conn.WriteMessage(websocket.TextMessage, []byte(message))
+
 	return err
 }
 
