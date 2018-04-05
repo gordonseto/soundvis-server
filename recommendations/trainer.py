@@ -91,8 +91,8 @@ for x in range(STRIDE, 2*STRIDE):
     create_user_with_ratings(x, ["Top 40", "Pop"])
 for x in range(3*STRIDE, 4*STRIDE):
     create_user_with_ratings(x, ["Dance", "Drum and Bass", "Electronic", "House"])
-for x in range(4*STRIDE, 5*STRIDE):
-    create_user_with_ratings(x, ["Oldies", "Old Time Radio", "60s", "70s"])
+# for x in range(4*STRIDE, 5*STRIDE):
+#     create_user_with_ratings(x, ["Oldies", "Old Time Radio", "60s", "70s"])
 # for x in range(5 * STRIDE, 6 * STRIDE):
 #     create_user_with_ratings(x, ["News", "Talk", "Comedy"])
 # for x in range(6 * STRIDE, 7 * STRIDE):
