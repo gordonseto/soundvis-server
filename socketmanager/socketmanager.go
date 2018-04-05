@@ -15,7 +15,6 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"github.com/gordonseto/soundvis-server/notifications"
 	"github.com/gordonseto/soundvis-server/config"
-	"github.com/gordonseto/soundvis-server/stations/models"
 )
 
 type SocketManager struct {
