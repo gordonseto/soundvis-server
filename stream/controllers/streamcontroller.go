@@ -121,17 +121,9 @@ func (sc *StreamController) handleSetCurrentStreamRequest(w http.ResponseWriter,
 		fmt.Println(err)
 	} else if userAgent == authentication.ANDROID {
 		// else send socket message to raspberry pi
-		err = socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), *response)
-		if err != nil {
-			fmt.Println("Socket error for userId: " + user.Id.Hex())
-			fmt.Println(err)
-		}
+		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex(), *response)
 		// send socket message to DE1
-		err = socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex() + "DE1", *response)
-		if err != nil {
-			fmt.Println("Socket error for userId: " + user.Id.Hex() + "DE1")
-			fmt.Println(err)
-		}
+		socketmanager.Shared().SendStreamUpdateMessage(user.Id.Hex() + "DE1", *response)
 	}
 
 	basecontroller.SendResponse(w, response)
