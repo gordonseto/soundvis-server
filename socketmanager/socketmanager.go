@@ -15,6 +15,8 @@ import (
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"github.com/gordonseto/soundvis-server/notifications"
 	"github.com/gordonseto/soundvis-server/config"
+	"github.com/gordonseto/soundvis-server/streamjobs"
+	"github.com/gordonseto/soundvis-server/users/repositories"
 )
 
 type SocketManager struct {
@@ -64,6 +66,20 @@ func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httpr
 
 	// register connection with userId
 	sm.connections[userId] = conn
+
+	// send update message
+	// TODO: Fix this
+	uid := userId
+	if userId[len(userId)-3:] == "DE1" {
+		uid = userId[:len(userId)-3]
+	}
+	user, err := usersrepository.Shared().FindUserById(uid)
+	if err != nil {
+		log.Println("User not found")
+	} else {
+		streamjobmanager.Shared().CheckNowPlayingForUser(*user)
+	}
+
 	// listen at connection
 	go sm.Listen(userId, conn)
 }
