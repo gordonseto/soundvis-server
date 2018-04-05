@@ -107,9 +107,17 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 				log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
 
 				// send to PI
-				sm.SendStreamUpdateMessage(uid, *response)
+				err = sm.SendStreamUpdateMessage(uid, *response)
+				if err != nil {
+					log.Println("UserId: " + userId + " Write:", err)
+					break
+				}
 				// send to DE1
-				sm.SendStreamUpdateMessage(uid + "DE1", *response)
+				err = sm.SendStreamUpdateMessage(uid + "DE1", *response)
+				if err != nil {
+					log.Println("UserId: " + userId + " Write:", err)
+					break
+				}
 
 				err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
 				log.Println(err)
@@ -136,12 +144,11 @@ func socketUpdateMessageToSetCurrentStreamRequest(message string) *streamIO.SetC
 	return nil
 }
 
-func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamIO.GetCurrentStreamResponse) {
+func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamIO.GetCurrentStreamResponse) error {
 	log.Println("SendStreamUpdateMessageUserId: ", userId)
 	conn, ok := sm.connections[userId]
 	if !ok {
-		log.Println(userId + " socket error: ", errors.New("No connection found for userId: " + userId))
-		return
+		return errors.New("No connection found for userId: " + userId)
 	}
 	//message := streamUpdateResponseToSocketMessage(&response)
 	//log.Println(message)
@@ -152,13 +159,10 @@ func (sm *SocketManager) SendStreamUpdateMessage(userId string, response streamI
 	response.CurrentStation.CreatedAt = 0
 	response.CurrentStation.UpdatedAt = 0
 
-	go func() {
-		err := conn.WriteJSON(response)
-		log.Println(userId + " socket error: ", err)
-	}()
+	err := conn.WriteJSON(response)
 	//err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 
-	return
+	return err
 }
 
 func streamUpdateResponseToSocketMessage(response *streamIO.GetCurrentStreamResponse) string {
