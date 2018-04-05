@@ -15,6 +15,7 @@ import (
 	"log"
 	"github.com/gordonseto/soundvis-server/stream/helpers"
 	"strconv"
+	"net/http/httputil"
 )
 
 type (
@@ -76,6 +77,12 @@ func (sc *StreamController) SetCurrentStream(w http.ResponseWriter, r *http.Requ
 
 // this is not good practice to put an update on a GET, but this is the easiest way for DE1 to update stream
 func (sc *StreamController) SetCurrentStreamDE1(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	requestDump, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(requestDump))
+
 	request := streamIO.SetCurrentStreamRequest{}
 	if p.ByName("isPlaying") == "1" {
 		request.IsPlaying = true

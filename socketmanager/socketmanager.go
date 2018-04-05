@@ -45,6 +45,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func (sm *SocketManager) Connect(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	log.Println("New socket connection!")
 	fmt.Println("UserId from header: " + r.Header.Get("userId"))
 	userId := r.Header.Get("userId")
 	userId = "5ac3cf9f8ac834137ba00c3b"
