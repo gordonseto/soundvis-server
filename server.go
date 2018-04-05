@@ -49,7 +49,7 @@ func main() {
 
 	jobmanager.Shared().RegisterStreamJobs()
 	jobmanager.Shared().RegisterRecordingJobs()
-	jobmanager.Shared().RegisterRecommenderJobs()
+	//jobmanager.Shared().RegisterRecommenderJobs()
 
 	go func(){
 		jobmanager.Shared().Start()
