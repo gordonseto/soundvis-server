@@ -84,7 +84,13 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 		//	log.Println("UserId: " + userId + " Write:", err)
 		//	break
 		//}
-		user, err := authentication.FindUser(userId)
+
+		uid := userId
+		if userId[len(userId)-3:] == "DE1" {
+			uid = userId[:len(userId)-3]
+		}
+
+		user, err := authentication.FindUser(uid)
 		if err != nil {
 			log.Println("UserId: " + userId + " does not exist")
 			break
@@ -98,25 +104,17 @@ func (sm *SocketManager) Listen(userId string, conn *websocket.Conn) {
 			} else {
 				log.Println("UserId: " + userId + " UpdateUsersStream Response: ", response)
 
-				err = sm.SendStreamUpdateMessage(userId, *response)
+				// send to PI
+				err = sm.SendStreamUpdateMessage(uid, *response)
 				if err != nil {
 					log.Println("UserId: " + userId + " Write:", err)
 					break
 				}
-				// send socket message to PI if from DE1
-				if userId[len(userId)-3:] == "DE1" {
-					err = sm.SendStreamUpdateMessage(userId[:len(userId)-3], *response)
-					if err != nil {
-						log.Println("UserId: " + userId + " Write:", err)
-						break
-					}
-				} else {
-					// else send to DE1
-					err = sm.SendStreamUpdateMessage(userId + "DE1", *response)
-					if err != nil {
-						log.Println("UserId: " + userId + " Write:", err)
-						break
-					}
+				// send to DE1
+				err = sm.SendStreamUpdateMessage(uid + "DE1", *response)
+				if err != nil {
+					log.Println("UserId: " + userId + " Write:", err)
+					break
 				}
 
 				err = notifications.SendStreamUpdateNotification([]string{user.DeviceToken}, *response)
