@@ -84,7 +84,7 @@ def create_user_with_ratings(user_id, genres):
         aggregated_sessions[user_id]['total'] = total
 
 # create fake users that only listen to specific genre
-STRIDE = 50
+STRIDE = 100
 for x in range(0, STRIDE):
     create_user_with_ratings(x, ["80s"])
 for x in range(STRIDE, 2*STRIDE):
